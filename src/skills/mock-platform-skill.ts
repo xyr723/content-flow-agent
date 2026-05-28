@@ -1,19 +1,21 @@
-import type { PlatformSkill } from "../core/platform-skill";
+import type { PlatformSkill } from "../core/platform-skill.js";
 import type {
   ContentPackage,
   PlatformDraft,
   PlatformId,
   PublishResult,
   ValidationResult,
-} from "../core/types";
+} from "../core/types.js";
 
 export class MockPlatformSkill implements PlatformSkill {
   readonly supportedMedia: PlatformSkill["supportedMedia"] = ["text", "image", "video"];
+  readonly id: PlatformId;
+  readonly displayName: string;
 
-  constructor(
-    readonly id: PlatformId,
-    readonly displayName: string,
-  ) {}
+  constructor(id: PlatformId, displayName: string) {
+    this.id = id;
+    this.displayName = displayName;
+  }
 
   async adapt(input: ContentPackage): Promise<PlatformDraft> {
     return {
@@ -27,9 +29,14 @@ export class MockPlatformSkill implements PlatformSkill {
   }
 
   async validate(draft: PlatformDraft): Promise<ValidationResult> {
+    const errors = [
+      ...(draft.title.length === 0 ? ["标题不能为空"] : []),
+      ...(draft.body.length === 0 ? ["正文不能为空"] : []),
+    ];
+
     return {
-      ok: draft.title.length > 0 && draft.body.length > 0,
-      errors: draft.title.length === 0 ? ["标题不能为空"] : [],
+      ok: errors.length === 0,
+      errors,
       warnings: draft.tags.length === 0 ? ["建议至少添加一个标签"] : [],
     };
   }
@@ -43,4 +50,3 @@ export class MockPlatformSkill implements PlatformSkill {
     };
   }
 }
-

@@ -182,6 +182,7 @@ ValidatePlatformDrafts -> HumanReviewHook -> PublishOrMockPublish
 - [协作规范](docs/process/pr-and-commit-guidelines.md)
 - [业务顺序图](docs/design/sequence-diagrams.md)
 - [发布状态图](docs/design/state-diagrams.md)
+- [第一阶段 workflow 示例](docs/examples/first-workflow.md)
 
 开发约定：
 

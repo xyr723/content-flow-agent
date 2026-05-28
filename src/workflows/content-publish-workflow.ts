@@ -1,5 +1,5 @@
-import type { ContentPackage, PlatformDraft, PublishResult, ValidationResult } from "../core/types";
-import type { SkillGateway } from "../core/skill-gateway";
+import type { ContentPackage, PlatformDraft, PublishResult, ValidationResult } from "../core/types.js";
+import type { SkillGateway } from "../core/skill-gateway.js";
 
 export type WorkflowResult = {
   drafts: PlatformDraft[];
@@ -31,4 +31,3 @@ export async function runContentPublishWorkflow(
   const publishResults = await gateway.publish(drafts);
   return { drafts, validations, publishResults };
 }
-

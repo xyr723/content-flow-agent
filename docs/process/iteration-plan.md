@@ -17,7 +17,7 @@ MVP 重点是：
 
 | 顺序 | 阶段 | 目标 | 验收标准 |
 | --- | --- | --- | --- |
-| 1 | `docs: add initial design documents` | 保留设计过程 | README 能链接需求、设计、图示和计划 |
+| 1 | `docs: add initial design documents` | 固定第一步工程边界 | README 能链接需求、设计、图示和计划；详细设计说明内容模型、Skill 协议、Gateway 和最小 workflow 链路；示例能展示一个内容输入到两个平台草稿，并覆盖 `manual_review` 与 `mock` 两种结果 |
 | 2 | `chore: initialize project structure` | 初始化工程 | 仓库结构清晰，主分支可打开 |
 | 3 | `feat: add content and skill contracts` | 定义核心数据模型 | 类型能表达文本、图片、视频和平台草稿 |
 | 4 | `feat: add deterministic workflow engine` | 建立单向 workflow | 输入内容包后能得到草稿、校验、发布结果 |
@@ -40,6 +40,18 @@ MVP 重点是：
   -> 填写 PR 描述
   -> 合并后保持 main 可运行
 ```
+
+## 第一阶段验收清单
+
+第一阶段完成后，后续 PR 应该能按 workflow 的固定边界继续扩展，而不是重新定义主链路。
+
+- 内容模型：`ContentPackage`、`PlatformDraft`、`PublishResult` 的字段能覆盖文本、图片、视频、目标平台和发布模式。
+- Skill 协议：平台能力统一实现 `PlatformSkill`，并清楚区分 `adapt`、`validate`、`publish` 的职责。
+- Gateway：平台 Skill 通过 `SkillGateway` 注册和查找；未注册平台有明确错误。
+- workflow：主链路保持单向流转，从内容输入到平台草稿、校验结果、审核或模拟发布结果。
+- 示例：`docs/examples/first-workflow.md` 展示一个 `ContentPackage`、两个平台草稿，以及 `manual_review` 和 `mock` 两种结果。
+
+后续扩展平台时，PR 应优先补充对应 Skill 和测试；只有当主链路边界确实不足时，才调整 workflow 或核心模型。
 
 ## 设计记录
 

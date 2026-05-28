@@ -1,7 +1,7 @@
 node_modules/
 dist/
+.test-build/
 .env
 .env.*
 coverage/
 .DS_Store
-

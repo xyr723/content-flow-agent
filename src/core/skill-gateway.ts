@@ -1,5 +1,5 @@
-import type { ContentPackage, PlatformDraft, PlatformId, PublishResult } from "./types";
-import type { PlatformSkill } from "./platform-skill";
+import type { ContentPackage, PlatformDraft, PlatformId, PublishResult } from "./types.js";
+import type { PlatformSkill } from "./platform-skill.js";
 
 export class SkillGateway {
   private readonly skills = new Map<PlatformId, PlatformSkill>();
@@ -28,4 +28,3 @@ export class SkillGateway {
     );
   }
 }
-

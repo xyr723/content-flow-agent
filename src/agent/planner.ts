@@ -1,4 +1,4 @@
-import type { ContentPackage, PlatformId } from "../core/types";
+import type { ContentPackage, PlatformId } from "../core/types.js";
 
 const PLATFORM_ALIASES: Array<[RegExp, PlatformId]> = [
   [/公众号|微信/i, "wechat"],
@@ -21,4 +21,3 @@ export function planContentPackage(sourceText: string, instruction: string): Con
     publishMode: /审核|确认|review/i.test(instruction) ? "manual_review" : "mock",
   };
 }
-
