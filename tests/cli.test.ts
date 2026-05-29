@@ -1,0 +1,47 @@
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { describe, it } from "node:test";
+
+function runCli(args: string[]) {
+  return spawnSync(process.execPath, ["dist/src/cli.js", ...args], {
+    cwd: process.cwd(),
+    encoding: "utf8",
+  });
+}
+
+describe("cli", () => {
+  it("runs the full workflow from command line arguments", () => {
+    const result = runCli([
+      "--text",
+      "这是一份用于多平台分发的正文。",
+      "--instruction",
+      "发到公众号和 B 站",
+      "--title",
+      "CLI 主流程",
+      "--image",
+      "cover.png",
+      "--video",
+      "demo.mp4",
+    ]);
+
+    assert.equal(result.status, 0, result.stderr);
+
+    const report = JSON.parse(result.stdout);
+    assert.deepEqual(
+      report.drafts.map((draft: { platform: string }) => draft.platform),
+      ["wechat", "bilibili"],
+    );
+    assert.deepEqual(
+      report.publishResults.map((publishResult: { status: string }) => publishResult.status),
+      ["mock_published", "mock_published"],
+    );
+  });
+
+  it("prints usage and exits with failure when required arguments are missing", () => {
+    const result = runCli(["--instruction", "发到公众号"]);
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /--text/);
+    assert.match(result.stderr, /--instruction/);
+  });
+});

@@ -1,11 +1,11 @@
-import type { PlatformSkill } from "../core/platform-skill";
+import type { PlatformSkill } from "../core/platform-skill.js";
 import type {
   ContentPackage,
   PlatformDraft,
   PlatformId,
   PublishResult,
   ValidationResult,
-} from "../core/types";
+} from "../core/types.js";
 
 export class MockPlatformSkill implements PlatformSkill {
   readonly supportedMedia: PlatformSkill["supportedMedia"] = ["text", "image", "video"];
@@ -43,4 +43,3 @@ export class MockPlatformSkill implements PlatformSkill {
     };
   }
 }
-

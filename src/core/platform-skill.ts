@@ -5,7 +5,7 @@ import type {
   PlatformId,
   PublishResult,
   ValidationResult,
-} from "./types";
+} from "./types.js";
 
 export interface PlatformSkill {
   id: PlatformId;
@@ -15,4 +15,3 @@ export interface PlatformSkill {
   validate(draft: PlatformDraft): Promise<ValidationResult>;
   publish(draft: PlatformDraft): Promise<PublishResult>;
 }
-
