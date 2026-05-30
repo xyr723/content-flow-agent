@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "build:gui": "tsc -p tsconfig.gui.json",
+    "build": "tsc -p tsconfig.build.json",
     "build:test": "tsc -p tsconfig.test.json",
-    "demo": "npm run build:gui && node scripts/serve-gui.mjs",
-    "test": "npm run build:test && node --test tests/core/*.test.js tests/skills/*.test.js tests/workflows/*.test.js tests/gui/*.test.js tests/scripts/*.test.js",
+    "demo": "npm run build && node dist/src/demo.js",
+    "demo:gui": "npm run build:gui && node scripts/serve-gui.mjs",
+    "start": "npm run build && node dist/src/cli.js",
+    "test": "npm run build && npm run build:test && node --test \"dist/tests/**/*.test.js\" tests/core/*.test.js tests/skills/*.test.js tests/workflows/*.test.js tests/gui/*.test.js tests/scripts/*.test.js",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/node": "^25.9.1",
     "typescript": "^5.6.0"
   }
 }

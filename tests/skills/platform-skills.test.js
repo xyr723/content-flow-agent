@@ -7,7 +7,7 @@ const testDir = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(testDir, "../..");
 
 const { createDefaultPlatformSkills, createDefaultSkillGateway } = await import(
-  pathToFileURL(resolve(projectRoot, ".test-build/src/skills/platform-skills.js"))
+  pathToFileURL(resolve(projectRoot, ".test-build/src/skills/default-platform-skills.js"))
 );
 
 const input = {
@@ -34,7 +34,7 @@ describe("platform skills", () => {
 
     assert.equal(new Set(drafts.map((draft) => draft.title)).size, 5);
     assert.ok(drafts.find((draft) => draft.platform === "wechat").summary);
-    assert.ok(drafts.find((draft) => draft.platform === "xiaohongshu").warnings.length > 0);
+    assert.ok(drafts.find((draft) => draft.platform === "xiaohongshu").tags.includes("种草笔记"));
     assert.ok(
       drafts.find((draft) => draft.platform === "bilibili").assets.some((asset) => asset.type === "video"),
     );

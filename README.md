@@ -225,20 +225,25 @@ ValidatePlatformDrafts -> HumanReviewHook -> PublishOrMockPublish
 
 ## 依赖说明
 
-当前初始化版本只包含项目文档和架构骨架，尚未引入第三方运行时依赖。
+当前 MVP 不引入第三方运行时依赖，核心流程由 TypeScript 实现。
 
-后续计划依赖：
+当前开发依赖：
 
-- LangChain：仅用于 Agent Planner。
-- Node.js / TypeScript：实现 workflow、Skill 和测试。
-- 可选前端框架：用于预览和人工审核界面。
+- TypeScript：类型检查和测试构建。
+- Node.js 内置 test runner：运行 MVP 单元测试。
+- `@types/node`：测试代码的 Node 类型声明。
+
+后续可选依赖：
+
+- LangChain：仅用于 Agent Planner，不进入发布主链路。
+- 前端框架：用于预览和人工审核界面。
 
 项目内实现的核心模块：
 
-- 单向内容发布 workflow 设计。
+- 单向内容发布 workflow。
 - 自研 PlatformSkill 协议。
 - SkillGateway 统一调用层。
-- 平台适配和校验规则。
+- 公众号、知乎、小红书、B 站、抖音平台适配和校验规则。
 - 模拟发布与发布报告。
 
 ## 本地开发
@@ -255,16 +260,62 @@ npm install
 npm test
 ```
 
-图形界面 demo：
+类型检查：
+
+```bash
+npm run typecheck
+```
+
+运行内置演示：
 
 ```bash
 npm run demo
 ```
 
-打开命令输出的本地地址后，可以看到「内容流转助手工作台」，包含内容输入、五个平台草稿、校验提醒、人工审核和模拟发布报告。
-
-类型检查：
+图形界面 demo：
 
 ```bash
-npm run typecheck
+npm run demo:gui
+```
+
+打开命令输出的本地地址后，可以看到「内容流转助手工作台」，包含内容输入、五个平台草稿、校验提醒、人工审核和模拟发布报告。
+
+运行 CLI 主流程：
+
+```bash
+npm start -- \
+  --text "这是一份用于多平台分发的正文。" \
+  --instruction "发到公众号、知乎、小红书、B 站和抖音" \
+  --title "多平台内容分发" \
+  --image cover.png \
+  --video demo.mp4
+```
+
+演示会输出一份 JSON 报告，包含：
+
+- `drafts`：五个平台的差异化草稿。
+- `validations`：每个平台的字段和素材校验结果。
+- `publishResults`：模拟发布结果或校验失败原因。
+
+## 代码示例
+
+```ts
+import {
+  createDefaultSkillGateway,
+  planContentPackage,
+  runContentPublishWorkflow,
+} from "./src/index.js";
+
+const input = planContentPackage(
+  "原始内容正文",
+  "发到公众号、知乎、小红书、B 站和抖音，先审核",
+  {
+    title: "多平台内容分发",
+    images: [{ id: "cover", type: "image", path: "cover.png" }],
+    videos: [{ id: "demo", type: "video", path: "demo.mp4" }],
+  },
+);
+
+const result = await runContentPublishWorkflow(input, createDefaultSkillGateway());
+console.log(result);
 ```

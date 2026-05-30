@@ -1,4 +1,9 @@
-import type { ContentPackage, PlatformDraft, PlatformId, PublishResult } from "./types.js";
+import type {
+  ContentPackage,
+  PlatformDraft,
+  PlatformId,
+  PublishResult,
+} from "./types.js";
 import type { PlatformSkill } from "./platform-skill.js";
 
 export class SkillGateway {

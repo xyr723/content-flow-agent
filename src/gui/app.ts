@@ -1,5 +1,5 @@
 import type { PublishMode } from "../core/types.js";
-import { createDefaultSkillGateway } from "../skills/platform-skills.js";
+import { createDefaultSkillGateway } from "../skills/default-platform-skills.js";
 import { runContentPublishWorkflow } from "../workflows/content-publish-workflow.js";
 import { createDemoContentPackage } from "./demo-data.js";
 import { renderWorkbench } from "./render.js";
