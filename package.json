@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:gui": "tsc -p tsconfig.gui.json",
     "build:test": "tsc -p tsconfig.test.json",
-    "test": "npm run build:test && node --test tests/core/*.test.js tests/skills/*.test.js tests/workflows/*.test.js",
+    "demo": "npm run build:gui && node scripts/serve-gui.mjs",
+    "test": "npm run build:test && node --test tests/core/*.test.js tests/skills/*.test.js tests/workflows/*.test.js tests/gui/*.test.js tests/scripts/*.test.js",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

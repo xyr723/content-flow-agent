@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .test-build/
+.gui-build/
+.superpowers/
 .env
 .env.*
 coverage/

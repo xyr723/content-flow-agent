@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": ".test-build",
+    "outDir": ".gui-build",
     "rootDir": "."
   },
   "include": ["src/**/*.ts"]

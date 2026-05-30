@@ -243,16 +243,28 @@ ValidatePlatformDrafts -> HumanReviewHook -> PublishOrMockPublish
 
 ## 本地开发
 
-初始化阶段：
-
-```bash
-git status
-```
-
-后续加入 TypeScript 工程后补充：
+安装依赖：
 
 ```bash
 npm install
+```
+
+运行测试：
+
+```bash
 npm test
-npm run dev
+```
+
+图形界面 demo：
+
+```bash
+npm run demo
+```
+
+打开命令输出的本地地址后，可以看到「内容流转助手工作台」，包含内容输入、五个平台草稿、校验提醒、人工审核和模拟发布报告。
+
+类型检查：
+
+```bash
+npm run typecheck
 ```

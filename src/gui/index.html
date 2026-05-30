@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>内容流转助手工作台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="page-head">
+        <div>
+          <h1>内容流转助手工作台</h1>
+          <p>一次输入，生成多平台草稿，并展示校验、审核和模拟发布结果。</p>
+        </div>
+        <div class="actions">
+          <button type="button" data-mode="manual_review" class="active">人工审核</button>
+          <button type="button" data-mode="mock">模拟发布</button>
+          <button type="button" id="run-workflow">生成平台草稿</button>
+        </div>
+      </header>
+      <nav class="flow-rail" aria-label="发布流程">
+        <span>输入</span>
+        <span>平台</span>
+        <span>校验</span>
+        <span>发布</span>
+      </nav>
+      <div id="status" class="status">准备生成</div>
+      <section id="app" class="workspace" aria-live="polite"></section>
+    </main>
+    <script type="module" src="/src/gui/app.js"></script>
+  </body>
+</html>
