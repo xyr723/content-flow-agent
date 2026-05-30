@@ -96,3 +96,46 @@ interface PlatformSkill {
 - 非阻塞建议：返回 warning。
 - 发布失败：返回 `failed` 状态，不影响其他平台结果。
 
+## 第一步开发验收标准
+
+第一步开发聚焦于把主链路的工程边界固定下来，后续平台能力只需要沿着同一套 workflow 扩展。
+
+### 内容模型
+
+- `ContentPackage` 能表达一次发布任务的原始内容、素材、目标平台和发布模式。
+- 图片、视频等素材在模型中统一描述，平台 Skill 不直接读取外部输入。
+- `PlatformDraft` 能承载平台适配后的标题、正文、摘要、标签、素材引用和警告。
+- `PublishResult` 能表达人工审核、模拟发布、失败等最小结果状态。
+
+### Skill 协议
+
+- 所有平台能力实现同一个 `PlatformSkill` 接口。
+- `adapt` 只负责把 `ContentPackage` 转为平台草稿。
+- `validate` 只负责检查草稿是否满足平台约束，并返回错误或警告。
+- `publish` 只负责接收已校验草稿并返回发布结果。
+- 新平台不需要修改 workflow 节点，只需要实现接口并完成注册。
+
+### SkillGateway
+
+- `SkillGateway` 按平台 ID 查找已注册 Skill。
+- 对未注册平台返回明确错误，便于调用方定位配置问题。
+- Gateway 不包含平台适配逻辑，只负责注册、查找和调用边界。
+- workflow 通过 Gateway 调用平台 Skill，避免直接依赖具体平台实现。
+
+### 最小可运行 workflow
+
+最小链路需要覆盖以下顺序：
+
+```text
+ContentPackage
+  -> PlanPlatforms
+  -> AdaptByPlatformSkills
+  -> ValidatePlatformDrafts
+  -> HumanReviewHook 或 PublishOrMockPublish
+  -> WorkflowResult
+```
+
+验收时至少准备一个输入内容包，选择两个平台，分别得到平台草稿和结果：
+
+- `manual_review` 模式：生成草稿和校验结果后停在待审核状态。
+- `mock` 模式：生成草稿、完成校验，并返回模拟发布结果。

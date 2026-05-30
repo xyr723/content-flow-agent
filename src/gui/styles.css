@@ -1,0 +1,262 @@
+:root {
+  --ink: #171716;
+  --muted: #6f7168;
+  --paper: #f7f4eb;
+  --surface: #fffdf7;
+  --line: #d9d5c5;
+  --green: #0e7c66;
+  --gold: #dfaa36;
+  --red: #c93f4d;
+  --blue: #2f6690;
+  --shadow: 0 18px 52px rgba(23, 23, 22, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(90deg, rgba(23, 23, 22, 0.045) 1px, transparent 1px),
+    linear-gradient(rgba(23, 23, 22, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 12% 12%, rgba(14, 124, 102, 0.12), transparent 26%),
+    radial-gradient(circle at 88% 86%, rgba(201, 63, 77, 0.10), transparent 28%),
+    var(--paper);
+  background-size: 24px 24px, 24px 24px, auto, auto, auto;
+  color: var(--ink);
+  font-family: "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  letter-spacing: 0;
+}
+
+button {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--green);
+}
+
+button.active,
+#run-workflow {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+}
+
+.shell {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.page-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+h1 {
+  margin: 0;
+  font-family: "Songti SC", "Noto Serif CJK SC", serif;
+  font-size: 36px;
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+
+.page-head p,
+.source-text,
+.report-card p {
+  color: #4f514b;
+  line-height: 1.72;
+}
+
+.actions,
+.flow-rail,
+.stats,
+.platform-row,
+.tag-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.flow-rail,
+.status,
+.content-panel,
+.draft-panel,
+.report-panel,
+.draft-card,
+.report-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 253, 247, 0.94);
+  box-shadow: var(--shadow);
+}
+
+.flow-rail,
+.status {
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.flow-rail span {
+  min-width: 64px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  text-align: center;
+  background: #fffefa;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.status {
+  color: #17332e;
+  font-weight: 800;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.85fr) minmax(420px, 1.25fr) minmax(320px, 0.9fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.content-panel,
+.draft-panel,
+.report-panel {
+  padding: 16px;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.field {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fffefa;
+  padding: 12px;
+}
+
+.source-text {
+  min-height: 176px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  padding: 12px;
+}
+
+.mode {
+  border-left: 4px solid var(--green);
+  padding: 10px 12px;
+  background: #eef6f2;
+  font-weight: 800;
+}
+
+.platform-row {
+  margin-bottom: 12px;
+}
+
+.draft-grid,
+.report-list {
+  display: grid;
+  gap: 12px;
+}
+
+.draft-card,
+.report-card {
+  padding: 14px;
+}
+
+.draft-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.draft-card h3 {
+  margin: 10px 0 8px;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.draft-card p {
+  max-height: 138px;
+  overflow: auto;
+  line-height: 1.68;
+}
+
+.tag,
+.badge,
+.platform-row span,
+.stats span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #f6f2e7;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge {
+  color: #12614f;
+  background: #eef5f1;
+}
+
+.stats {
+  margin-bottom: 12px;
+}
+
+.stats span:nth-child(2) {
+  border-color: rgba(223, 170, 54, 0.55);
+  background: #fbf0cf;
+}
+
+.stats span:nth-child(3) {
+  border-color: rgba(201, 63, 77, 0.38);
+  background: #f8e5e8;
+}
+
+.report-card {
+  display: grid;
+  gap: 7px;
+}
+
+.report-card strong {
+  font-size: 15px;
+}
+
+.report-card span {
+  width: max-content;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #eef5f1;
+  color: #12614f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 1000px) {
+  .page-head,
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+}

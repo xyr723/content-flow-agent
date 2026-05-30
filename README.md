@@ -182,6 +182,7 @@ ValidatePlatformDrafts -> HumanReviewHook -> PublishOrMockPublish
 - [协作规范](docs/process/pr-and-commit-guidelines.md)
 - [业务顺序图](docs/design/sequence-diagrams.md)
 - [发布状态图](docs/design/state-diagrams.md)
+- [第一阶段 workflow 示例](docs/examples/first-workflow.md)
 
 开发约定：
 
@@ -270,6 +271,14 @@ npm run typecheck
 ```bash
 npm run demo
 ```
+
+图形界面 demo：
+
+```bash
+npm run demo:gui
+```
+
+打开命令输出的本地地址后，可以看到「内容流转助手工作台」，包含内容输入、五个平台草稿、校验提醒、人工审核和模拟发布报告。
 
 运行 CLI 主流程：
 
