@@ -6,6 +6,7 @@
   "scripts": {
     "build:gui": "tsc -p tsconfig.gui.json",
     "build": "tsc -p tsconfig.build.json",
+    "build:pages": "npm run build:gui && node scripts/build-gui-page.mjs",
     "build:test": "tsc -p tsconfig.test.json",
     "demo": "npm run build && node dist/src/demo.js",
     "demo:gui": "npm run build:gui && node scripts/serve-gui.mjs",
