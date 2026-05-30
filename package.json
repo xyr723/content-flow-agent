@@ -17,5 +17,10 @@
   "devDependencies": {
     "@types/node": "^25.9.1",
     "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.1.48",
+    "@langchain/openai": "^1.4.7",
+    "zod": "^4.4.3"
   }
 }
