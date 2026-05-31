@@ -11,15 +11,41 @@
       <header class="page-head">
         <div>
           <h1>内容流转助手工作台</h1>
-          <p>一次输入，生成多平台草稿，并展示校验、审核、模拟发布和真实发布预检结果。</p>
+          <p>输入真实内容，调用 Node 后端生成多平台草稿，并展示校验、审核、模拟发布和真实发布预检结果。</p>
         </div>
         <div class="actions">
           <button type="button" data-mode="manual_review" class="active">人工审核</button>
           <button type="button" data-mode="mock">模拟发布</button>
           <button type="button" data-mode="real">真实发布预检</button>
-          <button type="button" id="run-workflow">生成平台草稿</button>
         </div>
       </header>
+      <form id="content-form" class="input-panel">
+        <label>
+          <span>标题</span>
+          <input id="title-input" name="title" value="三天搭建多平台内容发布工作流" />
+        </label>
+        <label class="wide-field">
+          <span>正文</span>
+          <textarea id="source-text" name="sourceText" rows="5">本周我们完成了一个面向创作者的内容发布工作流。用户只需要输入一次内容，系统会根据不同平台生成标题、正文、摘要、标签和素材顺序，并在发布前保留人工审核与模拟发布结果。</textarea>
+        </label>
+        <fieldset>
+          <legend>目标平台</legend>
+          <label><input type="checkbox" name="platform" value="wechat" checked />公众号</label>
+          <label><input type="checkbox" name="platform" value="zhihu" checked />知乎</label>
+          <label><input type="checkbox" name="platform" value="xiaohongshu" checked />小红书</label>
+          <label><input type="checkbox" name="platform" value="bilibili" checked />B 站</label>
+          <label><input type="checkbox" name="platform" value="douyin" checked />抖音</label>
+        </fieldset>
+        <label>
+          <span>图片路径</span>
+          <textarea id="image-paths" name="images" rows="3">assets/cover.png</textarea>
+        </label>
+        <label>
+          <span>视频路径</span>
+          <textarea id="video-paths" name="videos" rows="3">assets/demo.mp4</textarea>
+        </label>
+        <button type="submit" id="run-workflow">调用后端生成</button>
+      </form>
       <nav class="flow-rail" aria-label="发布流程">
         <span>输入</span>
         <span>平台</span>

@@ -5,6 +5,7 @@ export * from "./core/types.js";
 export * from "./extensions/external-skill-adapter.js";
 export * from "./publishing/publisher.js";
 export * from "./publishing/real-publisher.js";
+export * from "./server/api-server.js";
 export * from "./skills/default-platform-skills.js";
 export * from "./skills/mock-platform-skill.js";
 export * from "./validation/draft-validator.js";

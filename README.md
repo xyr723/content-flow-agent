@@ -283,8 +283,20 @@ npm run demo
 npm run demo:gui
 ```
 
-打开命令输出的本地地址后，可以看到「内容流转助手工作台」，包含内容输入、五个平台草稿、校验提醒、人工审核和模拟发布报告。
-工作台也提供「真实发布预检」模式；未配置真实发布执行器时，只返回安全失败结果，不读取凭据、不触达真实平台。
+打开命令输出的本地地址后，可以看到「内容流转助手工作台」。这个入口会同时启动 Node 后端和 GUI 静态文件服务：
+
+- GUI 提交自定义标题、正文、目标平台、发布模式、图片路径和视频路径。
+- 后端提供 `GET /api/health`、`POST /api/workflow/run` 和 `POST /api/workflow/review`。
+- 后端执行 Planner、workflow、SkillGateway、Validator、Publisher 和 RealPublisher。
+- 工作台提供「真实发布预检」模式；未配置真实发布执行器时，只返回安全失败结果，不读取凭据、不触达真实平台。
+
+仅构建 GitHub Pages 静态文件不能执行这些后端 API；真实演示应使用 `npm run demo:gui` 或部署 Node 后端服务。
+
+只启动后端和 GUI 服务：
+
+```bash
+npm run dev:server
+```
 
 运行 CLI 主流程：
 

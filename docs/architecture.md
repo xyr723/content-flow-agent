@@ -3,7 +3,7 @@
 ## 设计原则
 
 - KISS：主链路只保留输入、适配、校验、审核、发布。
-- YAGNI：真实发布 API 暂不做，默认模拟发布。
+- YAGNI：真实发布只做显式执行器扩展点和安全预检，默认模拟发布。
 - DRY：平台差异通过 Skill 插件隔离，workflow 不重复写平台逻辑。
 - 可测试：每个节点输入输出稳定，可单独写单元测试。
 
@@ -22,6 +22,19 @@ raw input
 ```
 
 每个节点只做一件事，输入输出都是结构化数据。
+
+## GUI 与后端 API
+
+真实演示入口采用同源 Node 服务：
+
+```text
+GUI
+  -> /api/workflow/run
+  -> Planner / Workflow / SkillGateway / Validator / Publisher
+  -> /api/workflow/review
+```
+
+GUI 负责收集标题、正文、目标平台、发布模式、图片路径和视频路径；后端负责执行 workflow。这样真实发布凭据、外部 Skill 执行器和 Node 环境能力都留在服务端，不进入浏览器。
 
 ## Agent 位置
 

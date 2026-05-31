@@ -52,6 +52,22 @@ button.active,
   color: #fff;
 }
 
+input,
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fffefa;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.55;
+  padding: 10px 12px;
+}
+
+textarea {
+  resize: vertical;
+}
+
 .shell {
   max-width: 1480px;
   margin: 0 auto;
@@ -95,6 +111,7 @@ h1 {
 
 .flow-rail,
 .status,
+.input-panel,
 .content-panel,
 .draft-panel,
 .report-panel,
@@ -110,6 +127,56 @@ h1 {
 .status {
   padding: 12px 14px;
   margin-bottom: 12px;
+}
+
+.input-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(320px, 1.2fr) minmax(220px, 0.75fr) minmax(220px, 0.75fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+  padding: 14px;
+}
+
+.input-panel label,
+.input-panel fieldset {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.input-panel span,
+.input-panel legend {
+  color: #3c403a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.input-panel fieldset {
+  grid-auto-flow: row;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  background: #fffefa;
+}
+
+.input-panel fieldset label {
+  display: flex;
+  grid-auto-flow: initial;
+  align-items: center;
+  gap: 7px;
+  color: #383b35;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.input-panel input[type="checkbox"] {
+  width: auto;
+}
+
+.wide-field {
+  min-width: 320px;
 }
 
 .flow-rail span {
@@ -290,6 +357,7 @@ h2 {
 
 @media (max-width: 1000px) {
   .page-head,
+  .input-panel,
   .workspace {
     grid-template-columns: 1fr;
   }
