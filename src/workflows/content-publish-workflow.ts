@@ -10,6 +10,7 @@ import {
   createDefaultPublisherRegistry,
   type PublisherRegistry,
 } from "../publishing/publisher.js";
+import { createDefaultRealPublisherRegistry } from "../publishing/real-publisher.js";
 import {
   createDefaultDraftValidator,
   type DraftValidator,
@@ -145,18 +146,14 @@ export async function publishOrMockPublishNode(
   drafts: PlatformDraft[],
   validations: ValidationResult[],
   publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
+  realPublisherRegistry: PublisherRegistry = createDefaultRealPublisherRegistry(),
 ): Promise<PublishResult[]> {
   if (input.publishMode === "manual_review") {
     return humanReviewHookNode(drafts);
   }
 
-  if (input.publishMode === "real") {
-    return drafts.map((draft) => ({
-      platform: draft.platform,
-      status: "failed",
-      message: "真实发布暂未在 MVP 中开放，请使用 mock 或 manual_review 模式。",
-    }));
-  }
+  const activePublisherRegistry =
+    input.publishMode === "real" ? realPublisherRegistry : publisherRegistry;
 
   return Promise.all(
     drafts.map((draft, index) => {
@@ -169,7 +166,7 @@ export async function publishOrMockPublishNode(
         };
       }
 
-      return publisherRegistry.get(draft.platform).publish(draft);
+      return activePublisherRegistry.get(draft.platform).publish(draft);
     }),
   );
 }
@@ -207,6 +204,7 @@ export async function runContentPublishWorkflow(
   input: ContentPackage,
   gateway: SkillGateway,
   publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
+  realPublisherRegistry: PublisherRegistry = createDefaultRealPublisherRegistry(),
 ): Promise<WorkflowResult> {
   const steps: WorkflowNodeStep[] = [];
 
@@ -251,6 +249,7 @@ export async function runContentPublishWorkflow(
     drafts,
     validations,
     publisherRegistry,
+    realPublisherRegistry,
   );
   steps.push(
     completedStep(

@@ -12,6 +12,9 @@ const { SkillGateway } = await import(
 const { MockPublisher, PublisherRegistry } = await import(
   pathToFileURL(resolve(projectRoot, ".test-build/src/publishing/publisher.js"))
 );
+const { RealPublisher } = await import(
+  pathToFileURL(resolve(projectRoot, ".test-build/src/publishing/real-publisher.js"))
+);
 const {
   adaptByPlatformSkillsNode,
   humanReviewHookNode,
@@ -95,6 +98,26 @@ function createPublisherRegistry(calls) {
   return registry;
 }
 
+function createRealPublisherRegistry(calls) {
+  const registry = new PublisherRegistry();
+  for (const platform of ["wechat", "zhihu"]) {
+    registry.register(
+      new RealPublisher(platform, platform, {
+        async publish(draft) {
+          calls.realPublisher.push(draft.platform);
+          return {
+            platform: draft.platform,
+            status: "mock_published",
+            url: `https://real.example/${draft.platform}`,
+            message: `${draft.platform} 真实发布扩展已调用`,
+          };
+        },
+      }),
+    );
+  }
+  return registry;
+}
+
 describe("content publish workflow nodes", () => {
   it("records deterministic workflow node steps", async () => {
     const { gateway } = createGateway();
@@ -152,6 +175,28 @@ describe("content publish workflow nodes", () => {
     );
     assert.deepEqual(calls.publish, []);
     assert.deepEqual(calls.publisher, ["wechat"]);
+  });
+
+  it("routes real mode through real publisher registry", async () => {
+    const { gateway, calls } = createGateway();
+    calls.realPublisher = [];
+    const mockPublishers = createPublisherRegistry(calls);
+    const realPublishers = createRealPublisherRegistry(calls);
+
+    const result = await runContentPublishWorkflow(
+      createInput("real"),
+      gateway,
+      mockPublishers,
+      realPublishers,
+    );
+
+    assert.deepEqual(
+      result.publishResults.map((publishResult) => publishResult.url),
+      ["https://real.example/wechat", undefined],
+    );
+    assert.deepEqual(calls.publish, []);
+    assert.deepEqual(calls.publisher, []);
+    assert.deepEqual(calls.realPublisher, ["wechat"]);
   });
 
   it("validates drafts with the independent validator instead of platform skills", async () => {

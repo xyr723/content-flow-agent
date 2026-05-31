@@ -58,7 +58,11 @@
 
 ### Publisher
 
-MVP 默认使用 `PublisherRegistry` 和 `MockPublisher`。workflow 发布节点只依赖 Publisher 抽象，不直接调用平台 Skill 的 `publish`。真实发布作为未来扩展。
+MVP 默认使用 `PublisherRegistry` 和 `MockPublisher`。workflow 发布节点只依赖 Publisher 抽象，不直接调用平台 Skill 的 `publish`。`real` 模式通过 `RealPublisher` 做真实发布预检，未显式配置执行器时只返回安全失败。
+
+### 扩展层
+
+外部 Skill 通过 `ExternalSkillAdapter` 进入内部 `PlatformSkill` 协议。GUI 展示外部 Skill 适配层可用和真实发布未配置状态，避免把扩展能力藏在代码路径里。
 
 ## 技术取舍
 
@@ -67,5 +71,5 @@ MVP 默认使用 `PublisherRegistry` 和 `MockPublisher`。workflow 发布节点
 | LangChain Agent 循环 | 不作为主链路 | 难预测、难测试、token 成本高 |
 | LangGraph | 暂不引入 | 当前流程是单向无环图，轻量 workflow 足够 |
 | 自研 workflow | 采用 | 节点简单，便于测试和展示 |
-| 外部 Skill 生态 | 未来兼容 | 当前阶段先保持协议稳定和实现可控 |
-| 真实发布 | 暂不默认支持 | 涉及账号、权限和风控风险 |
+| 外部 Skill 生态 | 通过 adapter 兼容 | 保持内部协议稳定，同时允许外部能力进入 Gateway |
+| 真实发布 | 仅做安全预检 | 涉及账号、权限和风控风险，必须显式配置执行器 |

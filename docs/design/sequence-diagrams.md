@@ -12,7 +12,7 @@ sequenceDiagram
     participant Skill as Platform Skills
     participant Validator as Draft Validator
     participant Review as Human Review Hook
-    participant Publisher as Mock Publisher
+    participant Publisher as Publisher Registry
 
     User->>UI: 输入原始内容、素材和发布要求
     UI->>Planner: 解析自然语言发布意图
@@ -26,10 +26,30 @@ sequenceDiagram
     Validator-->>Workflow: 返回 ValidationResult
     Workflow->>Review: 判断是否需要人工审核
     Review-->>Workflow: 通过、修改或拦截
-    Workflow->>Publisher: 按平台路由并执行模拟发布
+    Workflow->>Publisher: 按平台和模式路由发布或真实发布预检
     Publisher-->>Workflow: 返回 PublishResult
     Workflow-->>UI: 返回草稿、校验和发布报告
     UI-->>User: 展示多平台结果
+```
+
+## 外部 Skill 适配流程
+
+```mermaid
+sequenceDiagram
+    actor Dev as 开发者
+    participant External as External Skill
+    participant Adapter as ExternalSkillAdapter
+    participant Gateway as Skill Gateway
+    participant Validator as Draft Validator
+    participant Publisher as Mock Publisher
+
+    Dev->>Adapter: 包装外部 Skill
+    Adapter->>Gateway: 注册为 PlatformSkill
+    Gateway->>Adapter: 调用 adapt
+    Adapter->>External: 转发 adapt
+    Gateway-->>Dev: 返回内部 PlatformDraft
+    Adapter->>Validator: 缺省 validate 回落
+    Adapter->>Publisher: 缺省 publish 回落
 ```
 
 ## 新增平台 Skill 流程
