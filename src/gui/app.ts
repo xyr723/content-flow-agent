@@ -1,6 +1,7 @@
 import type { PlatformId, PublishMode } from "../core/types.js";
 import type { WorkflowResult } from "../workflows/content-publish-workflow.js";
 import type { ContentPackage } from "../core/types.js";
+import { postWorkflow } from "./api-client.js";
 import { renderWorkbench } from "./render.js";
 
 const appRoot = document.querySelector<HTMLElement>("#app");
@@ -21,13 +22,6 @@ type WorkflowRunPayload = {
   publishMode: PublishMode;
   images: string[];
   videos: string[];
-};
-
-type WorkflowApiResponse = {
-  ok: boolean;
-  input: ContentPackage;
-  result: WorkflowResult;
-  error?: string;
 };
 
 const platformIds: PlatformId[] = [
@@ -72,19 +66,6 @@ function createPayloadFromForm(form: HTMLFormElement): WorkflowRunPayload {
     images: splitPaths(formData.get("images")),
     videos: splitPaths(formData.get("videos")),
   };
-}
-
-async function postWorkflow(url: string, body: unknown): Promise<WorkflowApiResponse> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const payload = (await response.json()) as WorkflowApiResponse;
-  if (!response.ok || !payload.ok) {
-    throw new Error(payload.error ?? "后端 workflow 请求失败");
-  }
-  return payload;
 }
 
 async function runWorkflowFromForm(): Promise<void> {
