@@ -52,6 +52,22 @@ button.active,
   color: #fff;
 }
 
+input,
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fffefa;
+  color: var(--ink);
+  font: inherit;
+  line-height: 1.55;
+  padding: 10px 12px;
+}
+
+textarea {
+  resize: vertical;
+}
+
 .shell {
   max-width: 1480px;
   margin: 0 auto;
@@ -82,6 +98,8 @@ h1 {
 }
 
 .actions,
+.review-actions,
+.extension-status,
 .flow-rail,
 .stats,
 .platform-row,
@@ -93,6 +111,7 @@ h1 {
 
 .flow-rail,
 .status,
+.input-panel,
 .content-panel,
 .draft-panel,
 .report-panel,
@@ -108,6 +127,56 @@ h1 {
 .status {
   padding: 12px 14px;
   margin-bottom: 12px;
+}
+
+.input-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(320px, 1.2fr) minmax(220px, 0.75fr) minmax(220px, 0.75fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+  padding: 14px;
+}
+
+.input-panel label,
+.input-panel fieldset {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.input-panel span,
+.input-panel legend {
+  color: #3c403a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.input-panel fieldset {
+  grid-auto-flow: row;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  background: #fffefa;
+}
+
+.input-panel fieldset label {
+  display: flex;
+  grid-auto-flow: initial;
+  align-items: center;
+  gap: 7px;
+  color: #383b35;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.input-panel input[type="checkbox"] {
+  width: auto;
+}
+
+.wide-field {
+  min-width: 320px;
 }
 
 .flow-rail span {
@@ -166,6 +235,26 @@ h2 {
   font-weight: 800;
 }
 
+.extension-status {
+  margin-top: 12px;
+  align-items: center;
+}
+
+.extension-status strong,
+.extension-status span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #fffefa;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.extension-status span:last-child {
+  border-color: rgba(201, 63, 77, 0.38);
+  background: #f8e5e8;
+}
+
 .platform-row {
   margin-bottom: 12px;
 }
@@ -221,6 +310,22 @@ h2 {
   margin-bottom: 12px;
 }
 
+.review-actions {
+  margin-bottom: 12px;
+}
+
+.review-actions button:first-child {
+  border-color: var(--green);
+}
+
+.review-actions button:nth-child(2) {
+  border-color: rgba(201, 63, 77, 0.55);
+}
+
+.review-actions button:nth-child(3) {
+  border-color: rgba(47, 102, 144, 0.55);
+}
+
 .stats span:nth-child(2) {
   border-color: rgba(223, 170, 54, 0.55);
   background: #fbf0cf;
@@ -252,6 +357,7 @@ h2 {
 
 @media (max-width: 1000px) {
   .page-head,
+  .input-panel,
   .workspace {
     grid-template-columns: 1fr;
   }

@@ -9,13 +9,19 @@
     "build:pages": "npm run build:gui && node scripts/build-gui-page.mjs",
     "build:test": "tsc -p tsconfig.test.json",
     "demo": "npm run build && node dist/src/demo.js",
-    "demo:gui": "npm run build:gui && node scripts/serve-gui.mjs",
+    "demo:gui": "npm run dev:server",
+    "dev:server": "npm run build:gui && npm run build && node dist/src/server/api-server.js",
     "start": "npm run build && node dist/src/cli.js",
-    "test": "npm run build && npm run build:test && node --test \"dist/tests/**/*.test.js\" tests/core/*.test.js tests/skills/*.test.js tests/workflows/*.test.js tests/gui/*.test.js tests/scripts/*.test.js",
+    "test": "npm run build && npm run build:test && node --test \"dist/tests/**/*.test.js\" tests/core/*.test.js tests/extensions/*.test.js tests/skills/*.test.js tests/publishing/*.test.js tests/workflows/*.test.js tests/gui/*.test.js tests/scripts/*.test.js",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
     "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.1.48",
+    "@langchain/openai": "^1.4.7",
+    "zod": "^4.4.3"
   }
 }

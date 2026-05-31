@@ -1,15 +1,21 @@
 import {
   createDefaultSkillGateway,
+  createPlannerChatModel,
   planContentPackage,
+  planContentPackageWithLangChain,
   runContentPublishWorkflow,
 } from "./index.js";
 import type { MediaAsset, PublishMode } from "./index.js";
+
+type PlannerMode = "rules" | "hybrid" | "langchain";
 
 type CliOptions = {
   text?: string;
   instruction?: string;
   title?: string;
   mode?: PublishMode;
+  planner: PlannerMode;
+  plannerModel?: string;
   images: string[];
   videos: string[];
 };
@@ -25,7 +31,11 @@ Options:
   --title <title>              原始标题
   --image <path>               图片素材，可重复
   --video <path>               视频素材，可重复
-  --mode <mock|manual_review>  发布模式，默认从 instruction 推断
+  --mode <mock|manual_review|real>
+                              发布模式，默认从 instruction 推断
+  --planner <rules|hybrid|langchain>
+                              Planner 模式，默认 rules
+  --planner-model <model>      LangChain 模型名，例如 openai:gpt-4.1-mini
   --review                     等同于 --mode manual_review`;
 
 function readValue(args: string[], index: number, flag: string): string {
@@ -37,14 +47,22 @@ function readValue(args: string[], index: number, flag: string): string {
 }
 
 function parseMode(value: string): PublishMode {
-  if (value === "mock" || value === "manual_review") {
+  if (value === "mock" || value === "manual_review" || value === "real") {
     return value;
   }
-  throw new Error("--mode only supports mock or manual_review in MVP");
+  throw new Error("--mode only supports mock, manual_review, or real");
+}
+
+function parsePlannerMode(value: string): PlannerMode {
+  if (value === "rules" || value === "hybrid" || value === "langchain") {
+    return value;
+  }
+  throw new Error("--planner only supports rules, hybrid, or langchain");
 }
 
 export function parseCliArgs(args: string[]): CliOptions {
   const options: CliOptions = {
+    planner: "rules",
     images: [],
     videos: [],
   };
@@ -75,6 +93,14 @@ export function parseCliArgs(args: string[]): CliOptions {
         break;
       case "--mode":
         options.mode = parseMode(readValue(args, index, arg));
+        index += 1;
+        break;
+      case "--planner":
+        options.planner = parsePlannerMode(readValue(args, index, arg));
+        index += 1;
+        break;
+      case "--planner-model":
+        options.plannerModel = readValue(args, index, arg);
         index += 1;
         break;
       case "--review":
@@ -116,16 +142,44 @@ function assertRequiredOptions(options: CliOptions): asserts options is CliOptio
   }
 }
 
-export async function runCli(args: string[]): Promise<void> {
-  const options = parseCliArgs(args);
-  assertRequiredOptions(options);
-
-  const contentPackage = planContentPackage(options.text, options.instruction, {
+async function createContentPackageFromCliOptions(
+  options: CliOptions & {
+    text: string;
+    instruction: string;
+  },
+) {
+  const planOptions = {
     title: options.title,
     publishMode: options.mode,
     images: toAssets(options.images, "image"),
     videos: toAssets(options.videos, "video"),
-  });
+  };
+
+  if (options.planner === "rules") {
+    return planContentPackage(options.text, options.instruction, planOptions);
+  }
+
+  const plannerResult = await planContentPackageWithLangChain(
+    options.text,
+    options.instruction,
+    {
+      ...planOptions,
+      model:
+        options.planner === "langchain" || options.plannerModel
+          ? createPlannerChatModel({ modelName: options.plannerModel })
+          : undefined,
+      strategy: options.planner === "langchain" ? "force_langchain" : "hybrid",
+    },
+  );
+
+  return plannerResult.contentPackage;
+}
+
+export async function runCli(args: string[]): Promise<void> {
+  const options = parseCliArgs(args);
+  assertRequiredOptions(options);
+
+  const contentPackage = await createContentPackageFromCliOptions(options);
 
   const report = await runContentPublishWorkflow(
     contentPackage,
