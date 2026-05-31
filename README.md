@@ -290,7 +290,7 @@ npm run demo:gui
 - 后端执行 Planner、workflow、SkillGateway、Validator、Publisher 和 RealPublisher。
 - 工作台提供「真实发布预检」模式；未配置真实发布执行器时，只返回安全失败结果，不读取凭据、不触达真实平台。
 
-仅构建 GitHub Pages 静态文件不能执行这些后端 API；真实演示应使用 `npm run demo:gui` 或部署 Node 后端服务。
+当前不维护 GitHub Pages/HTTPS 静态部署作为演示入口。静态页面不能执行这些后端 API；录屏和验收统一使用 `npm run demo:gui` 启动本地 Node 后端，或部署备案后的 IP Node 服务。
 
 只启动后端和 GUI 服务：
 
