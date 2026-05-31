@@ -77,7 +77,7 @@ interface PlatformSkill {
 
 ### PublishOrMockPublish
 
-如果是 `mock` 模式，通过 `PublisherRegistry` 路由到平台 Publisher 并返回模拟发布结果。真实发布留作扩展。
+如果是 `mock` 模式，通过 `PublisherRegistry` 路由到 `MockPublisher` 并返回模拟发布结果。如果是 `real` 模式，通过真实发布注册表路由到 `RealPublisher`，未配置执行器时返回明确失败。
 
 ## 扩展新平台
 
@@ -133,8 +133,16 @@ interface PlatformSkill {
 
 - `PublisherRegistry` 按平台 ID 查找已注册 Publisher。
 - `MockPublisher` 生成稳定的模拟发布 URL 和结果。
+- `RealPublisher` 作为真实发布扩展点；未显式配置执行器时只返回安全失败。
 - workflow 通过 PublisherRegistry 执行发布，不直接调用平台 Skill 的 `publish`。
 - 审核拒绝和校验失败的平台不会调用 Publisher。
+
+### ExternalSkillAdapter
+
+- 外部 Skill 通过 `ExternalSkillAdapter` 转换为内部 `PlatformSkill`。
+- adapter 强制保留内部平台 ID，避免外部草稿改写路由。
+- 外部 Skill 未提供 `validate` 或 `publish` 时，回落到内部 `DraftValidator` 和 `MockPublisher`。
+- GUI 会展示外部 Skill 适配层可用状态，作为扩展层闭环入口。
 
 ### 最小可运行 workflow
 

@@ -83,6 +83,7 @@ h1 {
 
 .actions,
 .review-actions,
+.extension-status,
 .flow-rail,
 .stats,
 .platform-row,
@@ -165,6 +166,26 @@ h2 {
   padding: 10px 12px;
   background: #eef6f2;
   font-weight: 800;
+}
+
+.extension-status {
+  margin-top: 12px;
+  align-items: center;
+}
+
+.extension-status strong,
+.extension-status span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #fffefa;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.extension-status span:last-child {
+  border-color: rgba(201, 63, 77, 0.38);
+  background: #f8e5e8;
 }
 
 .platform-row {
