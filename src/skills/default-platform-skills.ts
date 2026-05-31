@@ -1,5 +1,6 @@
 import { SkillGateway } from "../core/skill-gateway.js";
 import type { PlatformSkill } from "../core/platform-skill.js";
+import { MockPublisher } from "../publishing/publisher.js";
 import type {
   ContentPackage,
   MediaAsset,
@@ -9,6 +10,7 @@ import type {
   PublishResult,
   ValidationResult,
 } from "../core/types.js";
+import { createDefaultDraftValidator } from "../validation/draft-validator.js";
 
 type PlatformProfile = {
   id: PlatformId;
@@ -22,6 +24,7 @@ type PlatformProfile = {
 };
 
 const MAX_TITLE_LENGTH = 40;
+const draftValidator = createDefaultDraftValidator();
 
 function compactText(text: string, maxLength: number): string {
   const normalized = text.replace(/\s+/g, " ").trim();
@@ -53,11 +56,13 @@ class ProfiledPlatformSkill implements PlatformSkill {
   readonly id: PlatformId;
   readonly displayName: string;
   readonly supportedMedia: PlatformSkill["supportedMedia"];
+  private readonly publisher: MockPublisher;
 
   constructor(private readonly profile: PlatformProfile) {
     this.id = profile.id;
     this.displayName = profile.displayName;
     this.supportedMedia = profile.supportedMedia;
+    this.publisher = new MockPublisher(profile.id, profile.displayName);
   }
 
   async adapt(input: ContentPackage): Promise<PlatformDraft> {
@@ -79,41 +84,11 @@ class ProfiledPlatformSkill implements PlatformSkill {
   }
 
   async validate(draft: PlatformDraft): Promise<ValidationResult> {
-    const errors: string[] = [];
-    const warnings = [...draft.warnings];
-
-    if (draft.title.trim().length === 0) {
-      errors.push("标题不能为空");
-    }
-
-    if (draft.body.trim().length === 0) {
-      errors.push("正文不能为空");
-    }
-
-    if (this.profile.requiredMedia && countByType(draft.assets, this.profile.requiredMedia) === 0) {
-      errors.push(
-        `缺少${this.profile.requiredMedia === "video" ? "视频" : "图片"}素材: ${this.displayName} 需要至少一个${this.profile.requiredMedia === "video" ? "视频" : "图片"}素材`,
-      );
-    }
-
-    if (draft.tags.length === 0) {
-      warnings.push("建议至少添加一个标签");
-    }
-
-    return {
-      ok: errors.length === 0,
-      errors,
-      warnings,
-    };
+    return draftValidator.validate(draft);
   }
 
   async publish(draft: PlatformDraft): Promise<PublishResult> {
-    return {
-      platform: draft.platform,
-      status: "mock_published",
-      url: `https://example.com/mock/${draft.platform}`,
-      message: `${this.displayName} 模拟发布成功`,
-    };
+    return this.publisher.publish(draft);
   }
 }
 

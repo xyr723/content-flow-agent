@@ -1,16 +1,27 @@
 import type {
   ContentPackage,
   PlatformDraft,
+  PlatformId,
   PublishResult,
   ValidationResult,
 } from "../core/types.js";
 import type { SkillGateway } from "../core/skill-gateway.js";
+import {
+  createDefaultPublisherRegistry,
+  type PublisherRegistry,
+} from "../publishing/publisher.js";
+import { createDefaultRealPublisherRegistry } from "../publishing/real-publisher.js";
+import {
+  createDefaultDraftValidator,
+  type DraftValidator,
+} from "../validation/draft-validator.js";
 
 export type WorkflowNodeName =
   | "plan_platforms"
   | "adapt_by_platform_skills"
   | "validate_platform_drafts"
   | "human_review_hook"
+  | "apply_review_decisions"
   | "publish_or_mock_publish";
 
 export type WorkflowNodeStep = {
@@ -24,6 +35,28 @@ export type WorkflowResult = {
   validations: ValidationResult[];
   publishResults: PublishResult[];
   steps: WorkflowNodeStep[];
+  reviewResults?: ReviewResult[];
+};
+
+export type ReviewAction = "approve" | "reject" | "edit";
+
+export type ReviewDraftPatch = Partial<
+  Pick<PlatformDraft, "title" | "body" | "summary" | "tags" | "assets" | "warnings">
+>;
+
+export type ReviewDecision = {
+  platform: PlatformId;
+  action: ReviewAction;
+  reason?: string;
+  patch?: ReviewDraftPatch;
+};
+
+export type ReviewResult = {
+  platform: PlatformId;
+  action: ReviewAction;
+  status: "approved" | "rejected" | "edited";
+  draft: PlatformDraft;
+  message: string;
 };
 
 function completedStep(node: WorkflowNodeName, message: string): WorkflowNodeStep {
@@ -47,11 +80,9 @@ export async function adaptByPlatformSkillsNode(
 
 export async function validatePlatformDraftsNode(
   drafts: PlatformDraft[],
-  gateway: SkillGateway,
+  validator: DraftValidator = createDefaultDraftValidator(),
 ): Promise<ValidationResult[]> {
-  return Promise.all(
-    drafts.map((draft) => gateway.get(draft.platform).validate(draft)),
-  );
+  return validator.validateAll(drafts);
 }
 
 export function humanReviewHookNode(drafts: PlatformDraft[]): PublishResult[] {
@@ -62,23 +93,67 @@ export function humanReviewHookNode(drafts: PlatformDraft[]): PublishResult[] {
   }));
 }
 
+export function applyReviewDecisionsNode(
+  drafts: PlatformDraft[],
+  decisions: ReviewDecision[],
+): ReviewResult[] {
+  const decisionsByPlatform = new Map(
+    decisions.map((decision) => [decision.platform, decision]),
+  );
+
+  return drafts.map((draft) => {
+    const decision = decisionsByPlatform.get(draft.platform);
+    if (!decision) {
+      throw new Error(`Missing review decision for platform: ${draft.platform}`);
+    }
+
+    if (decision.action === "reject") {
+      return {
+        platform: draft.platform,
+        action: decision.action,
+        status: "rejected",
+        draft,
+        message: decision.reason ?? "人工审核拒绝发布",
+      };
+    }
+
+    if (decision.action === "edit") {
+      return {
+        platform: draft.platform,
+        action: decision.action,
+        status: "edited",
+        draft: {
+          ...draft,
+          ...decision.patch,
+          platform: draft.platform,
+        },
+        message: decision.reason ?? "人工审核已修改草稿",
+      };
+    }
+
+    return {
+      platform: draft.platform,
+      action: decision.action,
+      status: "approved",
+      draft,
+      message: decision.reason ?? "人工审核通过",
+    };
+  });
+}
+
 export async function publishOrMockPublishNode(
   input: ContentPackage,
   drafts: PlatformDraft[],
   validations: ValidationResult[],
-  gateway: SkillGateway,
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
+  realPublisherRegistry: PublisherRegistry = createDefaultRealPublisherRegistry(),
 ): Promise<PublishResult[]> {
   if (input.publishMode === "manual_review") {
     return humanReviewHookNode(drafts);
   }
 
-  if (input.publishMode === "real") {
-    return drafts.map((draft) => ({
-      platform: draft.platform,
-      status: "failed",
-      message: "真实发布暂未在 MVP 中开放，请使用 mock 或 manual_review 模式。",
-    }));
-  }
+  const activePublisherRegistry =
+    input.publishMode === "real" ? realPublisherRegistry : publisherRegistry;
 
   return Promise.all(
     drafts.map((draft, index) => {
@@ -91,7 +166,36 @@ export async function publishOrMockPublishNode(
         };
       }
 
-      return gateway.get(draft.platform).publish(draft);
+      return activePublisherRegistry.get(draft.platform).publish(draft);
+    }),
+  );
+}
+
+export async function publishReviewedDraftsNode(
+  reviewResults: ReviewResult[],
+  validations: ValidationResult[],
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
+): Promise<PublishResult[]> {
+  return Promise.all(
+    reviewResults.map((reviewResult, index) => {
+      if (reviewResult.status === "rejected") {
+        return {
+          platform: reviewResult.platform,
+          status: "rejected" as const,
+          message: reviewResult.message,
+        };
+      }
+
+      const validation = validations[index];
+      if (!validation?.ok) {
+        return {
+          platform: reviewResult.platform,
+          status: "failed" as const,
+          message: validation?.errors.join("; ") ?? "平台草稿校验失败",
+        };
+      }
+
+      return publisherRegistry.get(reviewResult.platform).publish(reviewResult.draft);
     }),
   );
 }
@@ -99,6 +203,8 @@ export async function publishOrMockPublishNode(
 export async function runContentPublishWorkflow(
   input: ContentPackage,
   gateway: SkillGateway,
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
+  realPublisherRegistry: PublisherRegistry = createDefaultRealPublisherRegistry(),
 ): Promise<WorkflowResult> {
   const steps: WorkflowNodeStep[] = [];
 
@@ -118,7 +224,7 @@ export async function runContentPublishWorkflow(
     ),
   );
 
-  const validations = await validatePlatformDraftsNode(drafts, gateway);
+  const validations = await validatePlatformDraftsNode(drafts);
   steps.push(
     completedStep(
       "validate_platform_drafts",
@@ -142,7 +248,8 @@ export async function runContentPublishWorkflow(
     plannedInput,
     drafts,
     validations,
-    gateway,
+    publisherRegistry,
+    realPublisherRegistry,
   );
   steps.push(
     completedStep(
@@ -152,4 +259,66 @@ export async function runContentPublishWorkflow(
   );
 
   return { drafts, validations, publishResults, steps };
+}
+
+export async function runReviewedPublishWorkflow(
+  input: ContentPackage,
+  gateway: SkillGateway,
+  decisions: ReviewDecision[],
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
+): Promise<WorkflowResult> {
+  const steps: WorkflowNodeStep[] = [];
+
+  const plannedInput = planPlatformsNode(input);
+  steps.push(
+    completedStep(
+      "plan_platforms",
+      `Planned ${plannedInput.targetPlatforms.length} target platform(s).`,
+    ),
+  );
+
+  const originalDrafts = await adaptByPlatformSkillsNode(plannedInput, gateway);
+  steps.push(
+    completedStep(
+      "adapt_by_platform_skills",
+      `Created ${originalDrafts.length} platform draft(s).`,
+    ),
+  );
+
+  const reviewResults = applyReviewDecisionsNode(originalDrafts, decisions);
+  steps.push(
+    completedStep(
+      "apply_review_decisions",
+      `Applied ${reviewResults.length} review decision(s).`,
+    ),
+  );
+
+  const reviewedDrafts = reviewResults.map((reviewResult) => reviewResult.draft);
+  const validations = await validatePlatformDraftsNode(reviewedDrafts);
+  steps.push(
+    completedStep(
+      "validate_platform_drafts",
+      `Validated ${validations.length} reviewed draft(s).`,
+    ),
+  );
+
+  const publishResults = await publishReviewedDraftsNode(
+    reviewResults,
+    validations,
+    publisherRegistry,
+  );
+  steps.push(
+    completedStep(
+      "publish_or_mock_publish",
+      `Created ${publishResults.length} publish result(s).`,
+    ),
+  );
+
+  return {
+    drafts: reviewedDrafts,
+    validations,
+    publishResults,
+    steps,
+    reviewResults,
+  };
 }

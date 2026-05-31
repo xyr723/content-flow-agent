@@ -69,7 +69,7 @@ interface PlatformSkill {
 
 ### ValidatePlatformDrafts
 
-调用各平台 `validate`，输出错误和警告。
+调用独立 `DraftValidator`，输出错误和警告。平台 Skill 的 `validate` 保留为兼容入口，但默认 workflow 不直接依赖它。
 
 ### HumanReviewHook
 
@@ -77,7 +77,7 @@ interface PlatformSkill {
 
 ### PublishOrMockPublish
 
-如果是 `mock` 模式，返回模拟发布结果。真实发布留作扩展。
+如果是 `mock` 模式，通过 `PublisherRegistry` 路由到 `MockPublisher` 并返回模拟发布结果。如果是 `real` 模式，通过真实发布注册表路由到 `RealPublisher`，未配置执行器时返回明确失败。
 
 ## 扩展新平台
 
@@ -111,8 +111,8 @@ interface PlatformSkill {
 
 - 所有平台能力实现同一个 `PlatformSkill` 接口。
 - `adapt` 只负责把 `ContentPackage` 转为平台草稿。
-- `validate` 只负责检查草稿是否满足平台约束，并返回错误或警告。
-- `publish` 只负责接收已校验草稿并返回发布结果。
+- `validate` 保留兼容入口，并委托给独立校验器。
+- `publish` 保留兼容入口，并委托给 Publisher。
 - 新平台不需要修改 workflow 节点，只需要实现接口并完成注册。
 
 ### SkillGateway
@@ -121,6 +121,28 @@ interface PlatformSkill {
 - 对未注册平台返回明确错误，便于调用方定位配置问题。
 - Gateway 不包含平台适配逻辑，只负责注册、查找和调用边界。
 - workflow 通过 Gateway 调用平台 Skill，避免直接依赖具体平台实现。
+
+### DraftValidator
+
+- 独立负责草稿校验，不依赖平台 Skill 实例。
+- 通用规则覆盖标题、正文和标签提醒。
+- 平台规则覆盖素材要求等发布前阻断条件。
+- 审核编辑后的草稿会重新进入同一套校验器，校验失败则不发布对应平台。
+
+### PublisherRegistry
+
+- `PublisherRegistry` 按平台 ID 查找已注册 Publisher。
+- `MockPublisher` 生成稳定的模拟发布 URL 和结果。
+- `RealPublisher` 作为真实发布扩展点；未显式配置执行器时只返回安全失败。
+- workflow 通过 PublisherRegistry 执行发布，不直接调用平台 Skill 的 `publish`。
+- 审核拒绝和校验失败的平台不会调用 Publisher。
+
+### ExternalSkillAdapter
+
+- 外部 Skill 通过 `ExternalSkillAdapter` 转换为内部 `PlatformSkill`。
+- adapter 强制保留内部平台 ID，避免外部草稿改写路由。
+- 外部 Skill 未提供 `validate` 或 `publish` 时，回落到内部 `DraftValidator` 和 `MockPublisher`。
+- GUI 会展示外部 Skill 适配层可用状态，作为扩展层闭环入口。
 
 ### 最小可运行 workflow
 

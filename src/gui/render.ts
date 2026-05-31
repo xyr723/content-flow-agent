@@ -26,8 +26,15 @@ function escapeHtml(value: string): string {
 function statusText(result: PublishResult): string {
   if (result.status === "review_required") return "等待人工审核";
   if (result.status === "mock_published") return "模拟发布成功";
+  if (result.status === "rejected") return "审核拒绝";
   if (result.status === "failed") return "发布失败";
   return "已生成草稿";
+}
+
+function modeText(input: ContentPackage): string {
+  if (input.publishMode === "real") return "真实发布预检";
+  if (input.publishMode === "mock") return "模拟发布";
+  return "人工审核";
 }
 
 function renderDraft(draft: PlatformDraft, validation?: ValidationResult): string {
@@ -51,7 +58,10 @@ function renderDraft(draft: PlatformDraft, validation?: ValidationResult): strin
 
 function renderReport(result: PublishResult, validation?: ValidationResult): string {
   const issues = [...(validation?.errors ?? []), ...(validation?.warnings ?? [])];
-  const visibleMessage = issues[0] ?? statusText(result);
+  const visibleMessage =
+    result.status === "rejected" || (result.status === "failed" && validation?.ok !== false)
+      ? result.message
+      : issues[0] ?? statusText(result);
 
   return `
     <article class="report-card">
@@ -62,19 +72,50 @@ function renderReport(result: PublishResult, validation?: ValidationResult): str
   `;
 }
 
+function renderExtensionStatus(input: ContentPackage): string {
+  const realStatus = input.publishMode === "real" ? "未配置" : "预检待运行";
+
+  return `
+    <div class="extension-status" aria-label="扩展层状态">
+      <strong>扩展层状态</strong>
+      <span>外部 Skill 适配层：可用</span>
+      <span>真实发布：${realStatus}</span>
+    </div>
+  `;
+}
+
+function renderReviewActions(result: WorkflowResult): string {
+  const needsReview = result.publishResults.some(
+    (publishResult) => publishResult.status === "review_required",
+  );
+  if (!needsReview) return "";
+
+  return `
+    <div class="review-actions" aria-label="人工审核动作">
+      <button type="button" data-review-action="approve">通过审核并模拟发布</button>
+      <button type="button" data-review-action="reject">拒绝发布</button>
+      <button type="button" data-review-action="edit_first">编辑首个平台标题后发布</button>
+    </div>
+  `;
+}
+
 export function renderWorkbench(input: ContentPackage, result: WorkflowResult): string {
   const warningCount = result.validations.reduce(
     (count, validation) => count + validation.errors.length + validation.warnings.length,
     0,
   );
-  const failedCount = result.validations.filter((validation) => !validation.ok).length;
+  const failedCount = Math.max(
+    result.validations.filter((validation) => !validation.ok).length,
+    result.publishResults.filter((publishResult) => publishResult.status === "failed").length,
+  );
 
   return `
     <section class="content-panel">
       <h2>内容包</h2>
       <div class="field"><strong>${escapeHtml(input.title ?? "未命名内容")}</strong></div>
       <p class="source-text">${escapeHtml(input.sourceText)}</p>
-      <div class="mode">当前模式：${input.publishMode === "mock" ? "模拟发布" : "人工审核"}</div>
+      <div class="mode">当前模式：${modeText(input)}</div>
+      ${renderExtensionStatus(input)}
     </section>
     <section class="draft-panel">
       <h2>平台草稿</h2>
@@ -92,6 +133,7 @@ export function renderWorkbench(input: ContentPackage, result: WorkflowResult): 
         <span>提醒 ${warningCount}</span>
         <span>失败 ${failedCount}</span>
       </div>
+      ${renderReviewActions(result)}
       <div class="report-list">
         ${result.publishResults
           .map((publishResult, index) => renderReport(publishResult, result.validations[index]))

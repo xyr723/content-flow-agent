@@ -82,6 +82,8 @@ h1 {
 }
 
 .actions,
+.review-actions,
+.extension-status,
 .flow-rail,
 .stats,
 .platform-row,
@@ -166,6 +168,26 @@ h2 {
   font-weight: 800;
 }
 
+.extension-status {
+  margin-top: 12px;
+  align-items: center;
+}
+
+.extension-status strong,
+.extension-status span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #fffefa;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.extension-status span:last-child {
+  border-color: rgba(201, 63, 77, 0.38);
+  background: #f8e5e8;
+}
+
 .platform-row {
   margin-bottom: 12px;
 }
@@ -219,6 +241,22 @@ h2 {
 
 .stats {
   margin-bottom: 12px;
+}
+
+.review-actions {
+  margin-bottom: 12px;
+}
+
+.review-actions button:first-child {
+  border-color: var(--green);
+}
+
+.review-actions button:nth-child(2) {
+  border-color: rgba(201, 63, 77, 0.55);
+}
+
+.review-actions button:nth-child(3) {
+  border-color: rgba(47, 102, 144, 0.55);
 }
 
 .stats span:nth-child(2) {
