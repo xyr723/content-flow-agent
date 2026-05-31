@@ -31,7 +31,8 @@ Options:
   --title <title>              原始标题
   --image <path>               图片素材，可重复
   --video <path>               视频素材，可重复
-  --mode <mock|manual_review>  发布模式，默认从 instruction 推断
+  --mode <mock|manual_review|real>
+                              发布模式，默认从 instruction 推断
   --planner <rules|hybrid|langchain>
                               Planner 模式，默认 rules
   --planner-model <model>      LangChain 模型名，例如 openai:gpt-4.1-mini
@@ -46,10 +47,10 @@ function readValue(args: string[], index: number, flag: string): string {
 }
 
 function parseMode(value: string): PublishMode {
-  if (value === "mock" || value === "manual_review") {
+  if (value === "mock" || value === "manual_review" || value === "real") {
     return value;
   }
-  throw new Error("--mode only supports mock or manual_review in MVP");
+  throw new Error("--mode only supports mock, manual_review, or real");
 }
 
 function parsePlannerMode(value: string): PlannerMode {

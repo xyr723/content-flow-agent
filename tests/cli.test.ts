@@ -60,6 +60,29 @@ describe("cli", () => {
     );
   });
 
+  it("runs real publish preflight mode from the command line", () => {
+    const result = runCli([
+      "--text",
+      "这是一份用于真实发布预检的正文。",
+      "--instruction",
+      "发到公众号",
+      "--mode",
+      "real",
+    ]);
+
+    assert.equal(result.status, 0, result.stderr);
+
+    const report = JSON.parse(result.stdout);
+    assert.deepEqual(
+      report.publishResults.map((publishResult: { status: string }) => publishResult.status),
+      ["failed"],
+    );
+    assert.match(
+      report.publishResults[0].message,
+      /真实发布未配置: 公众号 需要显式配置发布凭据和执行器/,
+    );
+  });
+
   it("rejects unsupported planner modes", () => {
     const result = runCli([
       "--text",
