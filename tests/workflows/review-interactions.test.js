@@ -135,4 +135,24 @@ describe("review interactions", () => {
       ["内容发布工作流 wechat 已审核", "内容发布工作流 zhihu 已审核"],
     );
   });
+
+  it("blocks publishing when a review edit fails independent validation", async () => {
+    const { gateway, calls } = createGateway();
+
+    const result = await runReviewedPublishWorkflow(createInput(), gateway, [
+      { platform: "wechat", action: "approve" },
+      {
+        platform: "zhihu",
+        action: "edit",
+        patch: { title: " " },
+      },
+    ]);
+
+    assert.deepEqual(
+      result.publishResults.map((publishResult) => publishResult.status),
+      ["mock_published", "failed"],
+    );
+    assert.deepEqual(calls.publish.map((call) => call.platform), ["wechat"]);
+    assert.match(result.publishResults[1].message, /标题不能为空/);
+  });
 });

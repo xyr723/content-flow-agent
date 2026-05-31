@@ -41,7 +41,7 @@ function createSkill(platform, calls, valid = true) {
       return {
         platform,
         title: `${input.title} ${platform}`,
-        body: `${platform} 正文`,
+        body: valid ? `${platform} 正文` : "",
         tags: [platform],
         assets: input.images,
         warnings: [],
@@ -97,7 +97,7 @@ describe("content publish workflow nodes", () => {
     const { gateway, calls } = createGateway();
     const planned = planPlatformsNode(createInput("mock"));
     const drafts = await adaptByPlatformSkillsNode(planned, gateway);
-    const validations = await validatePlatformDraftsNode(drafts, gateway);
+    const validations = await validatePlatformDraftsNode(drafts);
     const reviewResults = humanReviewHookNode(drafts);
     const publishResults = await publishOrMockPublishNode(planned, drafts, validations, gateway);
 
@@ -111,7 +111,27 @@ describe("content publish workflow nodes", () => {
       publishResults.map((result) => result.status),
       ["mock_published", "failed"],
     );
+    assert.deepEqual(calls.validate, []);
     assert.deepEqual(calls.publish, ["wechat"]);
-    assert.match(publishResults[1].message, /zhihu 校验失败/);
+    assert.match(publishResults[1].message, /正文不能为空/);
+  });
+
+  it("validates drafts with the independent validator instead of platform skills", async () => {
+    const { gateway, calls } = createGateway();
+    const validations = await validatePlatformDraftsNode(
+      [
+        {
+          platform: "zhihu",
+          title: "知乎草稿",
+          body: "正文内容",
+          tags: ["知乎"],
+          assets: [],
+          warnings: [],
+        },
+      ],
+    );
+
+    assert.deepEqual(validations.map((validation) => validation.ok), [true]);
+    assert.deepEqual(calls.validate, []);
   });
 });

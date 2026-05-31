@@ -16,7 +16,7 @@ raw input
   -> normalized content package
   -> platform plan
   -> platform drafts
-  -> validation report
+  -> independent validation report
   -> human reviewed drafts
   -> publish results
 ```
@@ -50,10 +50,19 @@ Skill Gateway 是统一入口，负责：
 
 - 注册平台 Skill。
 - 根据平台 ID 找到 Skill。
-- 执行 `adapt`、`validate`、`publish`。
-- 收集错误和警告。
+- 执行 `adapt` 和 `publish`。
 
 这样平台扩展不会污染 workflow 主逻辑。
+
+## Draft Validator
+
+Draft Validator 是独立校验器，负责：
+
+- 检查通用草稿字段，例如标题、正文、标签。
+- 检查平台约束，例如 B 站和抖音的视频素材要求。
+- 合并平台适配阶段生成的非阻塞提醒。
+
+workflow 的 `validate_platform_drafts` 节点统一调用独立校验器。平台 Skill 的 `validate` 仅作为兼容入口保留，并委托给同一套校验器规则。
 
 ## 外部 Skill 兼容思路
 

@@ -6,6 +6,10 @@ import type {
   ValidationResult,
 } from "../core/types.js";
 import type { SkillGateway } from "../core/skill-gateway.js";
+import {
+  createDefaultDraftValidator,
+  type DraftValidator,
+} from "../validation/draft-validator.js";
 
 export type WorkflowNodeName =
   | "plan_platforms"
@@ -71,11 +75,9 @@ export async function adaptByPlatformSkillsNode(
 
 export async function validatePlatformDraftsNode(
   drafts: PlatformDraft[],
-  gateway: SkillGateway,
+  validator: DraftValidator = createDefaultDraftValidator(),
 ): Promise<ValidationResult[]> {
-  return Promise.all(
-    drafts.map((draft) => gateway.get(draft.platform).validate(draft)),
-  );
+  return validator.validateAll(drafts);
 }
 
 export function humanReviewHookNode(drafts: PlatformDraft[]): PublishResult[] {
@@ -219,7 +221,7 @@ export async function runContentPublishWorkflow(
     ),
   );
 
-  const validations = await validatePlatformDraftsNode(drafts, gateway);
+  const validations = await validatePlatformDraftsNode(drafts);
   steps.push(
     completedStep(
       "validate_platform_drafts",
@@ -287,7 +289,7 @@ export async function runReviewedPublishWorkflow(
   );
 
   const reviewedDrafts = reviewResults.map((reviewResult) => reviewResult.draft);
-  const validations = await validatePlatformDraftsNode(reviewedDrafts, gateway);
+  const validations = await validatePlatformDraftsNode(reviewedDrafts);
   steps.push(
     completedStep(
       "validate_platform_drafts",

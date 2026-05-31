@@ -69,7 +69,7 @@ interface PlatformSkill {
 
 ### ValidatePlatformDrafts
 
-调用各平台 `validate`，输出错误和警告。
+调用独立 `DraftValidator`，输出错误和警告。平台 Skill 的 `validate` 保留为兼容入口，但默认 workflow 不直接依赖它。
 
 ### HumanReviewHook
 
@@ -111,7 +111,7 @@ interface PlatformSkill {
 
 - 所有平台能力实现同一个 `PlatformSkill` 接口。
 - `adapt` 只负责把 `ContentPackage` 转为平台草稿。
-- `validate` 只负责检查草稿是否满足平台约束，并返回错误或警告。
+- `validate` 保留兼容入口，并委托给独立校验器。
 - `publish` 只负责接收已校验草稿并返回发布结果。
 - 新平台不需要修改 workflow 节点，只需要实现接口并完成注册。
 
@@ -121,6 +121,13 @@ interface PlatformSkill {
 - 对未注册平台返回明确错误，便于调用方定位配置问题。
 - Gateway 不包含平台适配逻辑，只负责注册、查找和调用边界。
 - workflow 通过 Gateway 调用平台 Skill，避免直接依赖具体平台实现。
+
+### DraftValidator
+
+- 独立负责草稿校验，不依赖平台 Skill 实例。
+- 通用规则覆盖标题、正文和标签提醒。
+- 平台规则覆盖素材要求等发布前阻断条件。
+- 审核编辑后的草稿会重新进入同一套校验器，校验失败则不发布对应平台。
 
 ### 最小可运行 workflow
 

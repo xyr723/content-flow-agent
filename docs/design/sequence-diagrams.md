@@ -10,6 +10,7 @@ sequenceDiagram
     participant Workflow as Workflow Engine
     participant Gateway as Skill Gateway
     participant Skill as Platform Skills
+    participant Validator as Draft Validator
     participant Review as Human Review Hook
     participant Publisher as Mock Publisher
 
@@ -21,10 +22,8 @@ sequenceDiagram
     Gateway->>Skill: 调用各平台 adapt
     Skill-->>Gateway: 返回 PlatformDraft
     Gateway-->>Workflow: 返回平台草稿列表
-    Workflow->>Gateway: 请求平台校验
-    Gateway->>Skill: 调用各平台 validate
-    Skill-->>Gateway: 返回 ValidationResult
-    Gateway-->>Workflow: 返回校验结果
+    Workflow->>Validator: 校验平台草稿
+    Validator-->>Workflow: 返回 ValidationResult
     Workflow->>Review: 判断是否需要人工审核
     Review-->>Workflow: 通过、修改或拦截
     Workflow->>Publisher: 执行模拟发布
@@ -49,4 +48,3 @@ sequenceDiagram
     Test-->>Dev: 返回测试结果
     Dev->>Docs: 更新平台能力和依赖说明
 ```
-
