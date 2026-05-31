@@ -69,7 +69,7 @@ workflow engine
   |
   +-- publishers
         - mock publisher
-        - future real publisher
+        - real publisher preflight
 ```
 
 ## 核心数据流
@@ -106,7 +106,7 @@ type PlatformDraft = {
 ```ts
 type PublishResult = {
   platform: PlatformId;
-  status: "drafted" | "review_required" | "mock_published" | "failed";
+  status: "drafted" | "review_required" | "mock_published" | "failed" | "rejected";
   url?: string;
   message: string;
 };
@@ -225,7 +225,12 @@ ValidatePlatformDrafts -> HumanReviewHook -> PublishOrMockPublish
 
 ## 依赖说明
 
-当前 MVP 不引入第三方运行时依赖，核心流程由 TypeScript 实现。
+核心 workflow、平台适配、校验和发布抽象由 TypeScript 实现。
+
+当前运行时依赖：
+
+- `@langchain/core`、`@langchain/openai`：仅用于 Planner 的 LangChain 接入。
+- `zod`：约束 LangChain Planner 的结构化输出。
 
 当前开发依赖：
 
@@ -235,8 +240,8 @@ ValidatePlatformDrafts -> HumanReviewHook -> PublishOrMockPublish
 
 后续可选依赖：
 
-- LangChain：仅用于 Agent Planner，不进入发布主链路。
 - 前端框架：用于预览和人工审核界面。
+- 真实平台 SDK 或 HTTP 客户端：只通过显式配置的 `RealPublisher` 执行器接入。
 
 项目内实现的核心模块：
 
@@ -244,7 +249,7 @@ ValidatePlatformDrafts -> HumanReviewHook -> PublishOrMockPublish
 - 自研 PlatformSkill 协议。
 - SkillGateway 统一调用层。
 - 公众号、知乎、小红书、B 站、抖音平台适配和校验规则。
-- 模拟发布与发布报告。
+- 模拟发布、真实发布预检与发布报告。
 
 ## 本地开发
 
@@ -279,6 +284,7 @@ npm run demo:gui
 ```
 
 打开命令输出的本地地址后，可以看到「内容流转助手工作台」，包含内容输入、五个平台草稿、校验提醒、人工审核和模拟发布报告。
+工作台也提供「真实发布预检」模式；未配置真实发布执行器时，只返回安全失败结果，不读取凭据、不触达真实平台。
 
 运行 CLI 主流程：
 
@@ -291,11 +297,20 @@ npm start -- \
   --video demo.mp4
 ```
 
+运行真实发布预检：
+
+```bash
+npm start -- \
+  --text "这是一份用于真实发布预检的正文。" \
+  --instruction "发到公众号" \
+  --mode real
+```
+
 演示会输出一份 JSON 报告，包含：
 
 - `drafts`：五个平台的差异化草稿。
 - `validations`：每个平台的字段和素材校验结果。
-- `publishResults`：模拟发布结果或校验失败原因。
+- `publishResults`：人工审核、模拟发布、真实发布预检或校验失败结果。
 
 ## 代码示例
 
