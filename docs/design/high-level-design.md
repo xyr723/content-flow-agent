@@ -58,7 +58,7 @@
 
 ### Publisher
 
-MVP 默认使用 mock publisher。真实发布作为未来扩展。
+MVP 默认使用 `PublisherRegistry` 和 `MockPublisher`。workflow 发布节点只依赖 Publisher 抽象，不直接调用平台 Skill 的 `publish`。真实发布作为未来扩展。
 
 ## 技术取舍
 

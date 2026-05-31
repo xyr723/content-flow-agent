@@ -7,6 +7,10 @@ import type {
 } from "../core/types.js";
 import type { SkillGateway } from "../core/skill-gateway.js";
 import {
+  createDefaultPublisherRegistry,
+  type PublisherRegistry,
+} from "../publishing/publisher.js";
+import {
   createDefaultDraftValidator,
   type DraftValidator,
 } from "../validation/draft-validator.js";
@@ -140,7 +144,7 @@ export async function publishOrMockPublishNode(
   input: ContentPackage,
   drafts: PlatformDraft[],
   validations: ValidationResult[],
-  gateway: SkillGateway,
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
 ): Promise<PublishResult[]> {
   if (input.publishMode === "manual_review") {
     return humanReviewHookNode(drafts);
@@ -165,7 +169,7 @@ export async function publishOrMockPublishNode(
         };
       }
 
-      return gateway.get(draft.platform).publish(draft);
+      return publisherRegistry.get(draft.platform).publish(draft);
     }),
   );
 }
@@ -173,7 +177,7 @@ export async function publishOrMockPublishNode(
 export async function publishReviewedDraftsNode(
   reviewResults: ReviewResult[],
   validations: ValidationResult[],
-  gateway: SkillGateway,
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
 ): Promise<PublishResult[]> {
   return Promise.all(
     reviewResults.map((reviewResult, index) => {
@@ -194,7 +198,7 @@ export async function publishReviewedDraftsNode(
         };
       }
 
-      return gateway.get(reviewResult.platform).publish(reviewResult.draft);
+      return publisherRegistry.get(reviewResult.platform).publish(reviewResult.draft);
     }),
   );
 }
@@ -202,6 +206,7 @@ export async function publishReviewedDraftsNode(
 export async function runContentPublishWorkflow(
   input: ContentPackage,
   gateway: SkillGateway,
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
 ): Promise<WorkflowResult> {
   const steps: WorkflowNodeStep[] = [];
 
@@ -245,7 +250,7 @@ export async function runContentPublishWorkflow(
     plannedInput,
     drafts,
     validations,
-    gateway,
+    publisherRegistry,
   );
   steps.push(
     completedStep(
@@ -261,6 +266,7 @@ export async function runReviewedPublishWorkflow(
   input: ContentPackage,
   gateway: SkillGateway,
   decisions: ReviewDecision[],
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
 ): Promise<WorkflowResult> {
   const steps: WorkflowNodeStep[] = [];
 
@@ -300,7 +306,7 @@ export async function runReviewedPublishWorkflow(
   const publishResults = await publishReviewedDraftsNode(
     reviewResults,
     validations,
-    gateway,
+    publisherRegistry,
   );
   steps.push(
     completedStep(

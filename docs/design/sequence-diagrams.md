@@ -26,7 +26,7 @@ sequenceDiagram
     Validator-->>Workflow: 返回 ValidationResult
     Workflow->>Review: 判断是否需要人工审核
     Review-->>Workflow: 通过、修改或拦截
-    Workflow->>Publisher: 执行模拟发布
+    Workflow->>Publisher: 按平台路由并执行模拟发布
     Publisher-->>Workflow: 返回 PublishResult
     Workflow-->>UI: 返回草稿、校验和发布报告
     UI-->>User: 展示多平台结果
@@ -44,7 +44,7 @@ sequenceDiagram
 
     Dev->>Skill: 实现 PlatformSkill 接口
     Dev->>Gateway: 注册平台 Skill
-    Dev->>Test: 添加 adapt/validate/publish 测试
+    Dev->>Test: 添加 adapt 和 Publisher 测试
     Test-->>Dev: 返回测试结果
     Dev->>Docs: 更新平台能力和依赖说明
 ```

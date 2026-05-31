@@ -77,7 +77,7 @@ interface PlatformSkill {
 
 ### PublishOrMockPublish
 
-如果是 `mock` 模式，返回模拟发布结果。真实发布留作扩展。
+如果是 `mock` 模式，通过 `PublisherRegistry` 路由到平台 Publisher 并返回模拟发布结果。真实发布留作扩展。
 
 ## 扩展新平台
 
@@ -112,7 +112,7 @@ interface PlatformSkill {
 - 所有平台能力实现同一个 `PlatformSkill` 接口。
 - `adapt` 只负责把 `ContentPackage` 转为平台草稿。
 - `validate` 保留兼容入口，并委托给独立校验器。
-- `publish` 只负责接收已校验草稿并返回发布结果。
+- `publish` 保留兼容入口，并委托给 Publisher。
 - 新平台不需要修改 workflow 节点，只需要实现接口并完成注册。
 
 ### SkillGateway
@@ -128,6 +128,13 @@ interface PlatformSkill {
 - 通用规则覆盖标题、正文和标签提醒。
 - 平台规则覆盖素材要求等发布前阻断条件。
 - 审核编辑后的草稿会重新进入同一套校验器，校验失败则不发布对应平台。
+
+### PublisherRegistry
+
+- `PublisherRegistry` 按平台 ID 查找已注册 Publisher。
+- `MockPublisher` 生成稳定的模拟发布 URL 和结果。
+- workflow 通过 PublisherRegistry 执行发布，不直接调用平台 Skill 的 `publish`。
+- 审核拒绝和校验失败的平台不会调用 Publisher。
 
 ### 最小可运行 workflow
 
