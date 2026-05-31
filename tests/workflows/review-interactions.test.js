@@ -9,6 +9,9 @@ const projectRoot = resolve(testDir, "../..");
 const { SkillGateway } = await import(
   pathToFileURL(resolve(projectRoot, ".test-build/src/core/skill-gateway.js"))
 );
+const { MockPublisher, PublisherRegistry } = await import(
+  pathToFileURL(resolve(projectRoot, ".test-build/src/publishing/publisher.js"))
+);
 const { runReviewedPublishWorkflow } = await import(
   pathToFileURL(resolve(projectRoot, ".test-build/src/workflows/content-publish-workflow.js"))
 );
@@ -25,7 +28,7 @@ function createInput() {
 }
 
 function createGateway(validateDraft = () => true) {
-  const calls = { adapt: [], validate: [], publish: [] };
+  const calls = { adapt: [], validate: [], publish: [], publisher: [] };
   const gateway = new SkillGateway();
 
   for (const platform of ["wechat", "zhihu"]) {
@@ -66,14 +69,39 @@ function createGateway(validateDraft = () => true) {
   return { gateway, calls };
 }
 
+function createPublisherRegistry(calls) {
+  const registry = new PublisherRegistry();
+  for (const platform of ["wechat", "zhihu"]) {
+    registry.register({
+      ...new MockPublisher(platform, platform),
+      async publish(draft) {
+        calls.publisher.push({ platform: draft.platform, title: draft.title });
+        return {
+          platform: draft.platform,
+          status: "mock_published",
+          url: `https://example.com/mock/${draft.platform}`,
+          message: `${draft.platform} publisher 发布成功`,
+        };
+      },
+    });
+  }
+  return registry;
+}
+
 describe("review interactions", () => {
   it("publishes approved drafts after manual review", async () => {
     const { gateway, calls } = createGateway();
+    const publishers = createPublisherRegistry(calls);
 
-    const result = await runReviewedPublishWorkflow(createInput(), gateway, [
-      { platform: "wechat", action: "approve" },
-      { platform: "zhihu", action: "approve" },
-    ]);
+    const result = await runReviewedPublishWorkflow(
+      createInput(),
+      gateway,
+      [
+        { platform: "wechat", action: "approve" },
+        { platform: "zhihu", action: "approve" },
+      ],
+      publishers,
+    );
 
     assert.deepEqual(
       result.reviewResults.map((review) => review.status),
@@ -85,6 +113,10 @@ describe("review interactions", () => {
     );
     assert.deepEqual(
       calls.publish.map((call) => call.platform),
+      [],
+    );
+    assert.deepEqual(
+      calls.publisher.map((call) => call.platform),
       ["wechat", "zhihu"],
     );
     assert.ok(result.steps.some((step) => step.node === "apply_review_decisions"));
@@ -92,35 +124,48 @@ describe("review interactions", () => {
 
   it("rejects a draft without publishing it", async () => {
     const { gateway, calls } = createGateway();
+    const publishers = createPublisherRegistry(calls);
 
-    const result = await runReviewedPublishWorkflow(createInput(), gateway, [
-      { platform: "wechat", action: "approve" },
-      { platform: "zhihu", action: "reject", reason: "内容不适合知乎" },
-    ]);
+    const result = await runReviewedPublishWorkflow(
+      createInput(),
+      gateway,
+      [
+        { platform: "wechat", action: "approve" },
+        { platform: "zhihu", action: "reject", reason: "内容不适合知乎" },
+      ],
+      publishers,
+    );
 
     assert.deepEqual(
       result.publishResults.map((publishResult) => publishResult.status),
       ["mock_published", "rejected"],
     );
-    assert.deepEqual(calls.publish.map((call) => call.platform), ["wechat"]);
+    assert.deepEqual(calls.publish.map((call) => call.platform), []);
+    assert.deepEqual(calls.publisher.map((call) => call.platform), ["wechat"]);
     assert.match(result.publishResults[1].message, /内容不适合知乎/);
   });
 
   it("applies edited drafts and revalidates them before publishing", async () => {
     const { gateway, calls } = createGateway((draft) => draft.title.includes("已审核"));
+    const publishers = createPublisherRegistry(calls);
 
-    const result = await runReviewedPublishWorkflow(createInput(), gateway, [
-      {
-        platform: "wechat",
-        action: "edit",
-        patch: { title: "内容发布工作流 wechat 已审核" },
-      },
-      {
-        platform: "zhihu",
-        action: "edit",
-        patch: { title: "内容发布工作流 zhihu 已审核" },
-      },
-    ]);
+    const result = await runReviewedPublishWorkflow(
+      createInput(),
+      gateway,
+      [
+        {
+          platform: "wechat",
+          action: "edit",
+          patch: { title: "内容发布工作流 wechat 已审核" },
+        },
+        {
+          platform: "zhihu",
+          action: "edit",
+          patch: { title: "内容发布工作流 zhihu 已审核" },
+        },
+      ],
+      publishers,
+    );
 
     assert.deepEqual(
       result.reviewResults.map((review) => review.status),
@@ -132,7 +177,38 @@ describe("review interactions", () => {
     );
     assert.deepEqual(
       calls.publish.map((call) => call.title),
+      [],
+    );
+    assert.deepEqual(
+      calls.publisher.map((call) => call.title),
       ["内容发布工作流 wechat 已审核", "内容发布工作流 zhihu 已审核"],
     );
+  });
+
+  it("blocks publishing when a review edit fails independent validation", async () => {
+    const { gateway, calls } = createGateway();
+    const publishers = createPublisherRegistry(calls);
+
+    const result = await runReviewedPublishWorkflow(
+      createInput(),
+      gateway,
+      [
+        { platform: "wechat", action: "approve" },
+        {
+          platform: "zhihu",
+          action: "edit",
+          patch: { title: " " },
+        },
+      ],
+      publishers,
+    );
+
+    assert.deepEqual(
+      result.publishResults.map((publishResult) => publishResult.status),
+      ["mock_published", "failed"],
+    );
+    assert.deepEqual(calls.publish.map((call) => call.platform), []);
+    assert.deepEqual(calls.publisher.map((call) => call.platform), ["wechat"]);
+    assert.match(result.publishResults[1].message, /标题不能为空/);
   });
 });

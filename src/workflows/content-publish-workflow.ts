@@ -6,6 +6,15 @@ import type {
   ValidationResult,
 } from "../core/types.js";
 import type { SkillGateway } from "../core/skill-gateway.js";
+import {
+  createDefaultPublisherRegistry,
+  type PublisherRegistry,
+} from "../publishing/publisher.js";
+import { createDefaultRealPublisherRegistry } from "../publishing/real-publisher.js";
+import {
+  createDefaultDraftValidator,
+  type DraftValidator,
+} from "../validation/draft-validator.js";
 
 export type WorkflowNodeName =
   | "plan_platforms"
@@ -71,11 +80,9 @@ export async function adaptByPlatformSkillsNode(
 
 export async function validatePlatformDraftsNode(
   drafts: PlatformDraft[],
-  gateway: SkillGateway,
+  validator: DraftValidator = createDefaultDraftValidator(),
 ): Promise<ValidationResult[]> {
-  return Promise.all(
-    drafts.map((draft) => gateway.get(draft.platform).validate(draft)),
-  );
+  return validator.validateAll(drafts);
 }
 
 export function humanReviewHookNode(drafts: PlatformDraft[]): PublishResult[] {
@@ -138,19 +145,15 @@ export async function publishOrMockPublishNode(
   input: ContentPackage,
   drafts: PlatformDraft[],
   validations: ValidationResult[],
-  gateway: SkillGateway,
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
+  realPublisherRegistry: PublisherRegistry = createDefaultRealPublisherRegistry(),
 ): Promise<PublishResult[]> {
   if (input.publishMode === "manual_review") {
     return humanReviewHookNode(drafts);
   }
 
-  if (input.publishMode === "real") {
-    return drafts.map((draft) => ({
-      platform: draft.platform,
-      status: "failed",
-      message: "真实发布暂未在 MVP 中开放，请使用 mock 或 manual_review 模式。",
-    }));
-  }
+  const activePublisherRegistry =
+    input.publishMode === "real" ? realPublisherRegistry : publisherRegistry;
 
   return Promise.all(
     drafts.map((draft, index) => {
@@ -163,7 +166,7 @@ export async function publishOrMockPublishNode(
         };
       }
 
-      return gateway.get(draft.platform).publish(draft);
+      return activePublisherRegistry.get(draft.platform).publish(draft);
     }),
   );
 }
@@ -171,7 +174,7 @@ export async function publishOrMockPublishNode(
 export async function publishReviewedDraftsNode(
   reviewResults: ReviewResult[],
   validations: ValidationResult[],
-  gateway: SkillGateway,
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
 ): Promise<PublishResult[]> {
   return Promise.all(
     reviewResults.map((reviewResult, index) => {
@@ -192,7 +195,7 @@ export async function publishReviewedDraftsNode(
         };
       }
 
-      return gateway.get(reviewResult.platform).publish(reviewResult.draft);
+      return publisherRegistry.get(reviewResult.platform).publish(reviewResult.draft);
     }),
   );
 }
@@ -200,6 +203,8 @@ export async function publishReviewedDraftsNode(
 export async function runContentPublishWorkflow(
   input: ContentPackage,
   gateway: SkillGateway,
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
+  realPublisherRegistry: PublisherRegistry = createDefaultRealPublisherRegistry(),
 ): Promise<WorkflowResult> {
   const steps: WorkflowNodeStep[] = [];
 
@@ -219,7 +224,7 @@ export async function runContentPublishWorkflow(
     ),
   );
 
-  const validations = await validatePlatformDraftsNode(drafts, gateway);
+  const validations = await validatePlatformDraftsNode(drafts);
   steps.push(
     completedStep(
       "validate_platform_drafts",
@@ -243,7 +248,8 @@ export async function runContentPublishWorkflow(
     plannedInput,
     drafts,
     validations,
-    gateway,
+    publisherRegistry,
+    realPublisherRegistry,
   );
   steps.push(
     completedStep(
@@ -259,6 +265,7 @@ export async function runReviewedPublishWorkflow(
   input: ContentPackage,
   gateway: SkillGateway,
   decisions: ReviewDecision[],
+  publisherRegistry: PublisherRegistry = createDefaultPublisherRegistry(),
 ): Promise<WorkflowResult> {
   const steps: WorkflowNodeStep[] = [];
 
@@ -287,7 +294,7 @@ export async function runReviewedPublishWorkflow(
   );
 
   const reviewedDrafts = reviewResults.map((reviewResult) => reviewResult.draft);
-  const validations = await validatePlatformDraftsNode(reviewedDrafts, gateway);
+  const validations = await validatePlatformDraftsNode(reviewedDrafts);
   steps.push(
     completedStep(
       "validate_platform_drafts",
@@ -298,7 +305,7 @@ export async function runReviewedPublishWorkflow(
   const publishResults = await publishReviewedDraftsNode(
     reviewResults,
     validations,
-    gateway,
+    publisherRegistry,
   );
   steps.push(
     completedStep(

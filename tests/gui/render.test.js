@@ -88,6 +88,33 @@ describe("renderWorkbench", () => {
     assert.match(html, /人工审核拒绝发布/);
   });
 
+  it("renders real publish preflight mode and extension status", () => {
+    const html = renderWorkbench(
+      { ...input, publishMode: "real" },
+      {
+        ...result,
+        publishResults: [
+          {
+            platform: "wechat",
+            status: "failed",
+            message: "真实发布未配置: 公众号 需要显式配置发布凭据和执行器。",
+          },
+          {
+            platform: "zhihu",
+            status: "failed",
+            message: "真实发布未配置: 知乎 需要显式配置发布凭据和执行器。",
+          },
+        ],
+      },
+    );
+
+    assert.match(html, /当前模式：真实发布预检/);
+    assert.match(html, /扩展层状态/);
+    assert.match(html, /外部 Skill 适配层/);
+    assert.match(html, /真实发布：未配置/);
+    assert.match(html, /真实发布未配置: 公众号/);
+  });
+
   it("escapes source content before rendering", () => {
     const html = renderWorkbench({ ...input, sourceText: "<script>bad</script>" }, result);
 

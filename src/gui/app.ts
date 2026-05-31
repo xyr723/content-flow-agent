@@ -16,6 +16,7 @@ const appRoot = document.querySelector<HTMLElement>("#app");
 const statusRoot = document.querySelector<HTMLElement>("#status");
 const reviewButton = document.querySelector<HTMLButtonElement>("[data-mode='manual_review']");
 const mockButton = document.querySelector<HTMLButtonElement>("[data-mode='mock']");
+const realButton = document.querySelector<HTMLButtonElement>("[data-mode='real']");
 const runButton = document.querySelector<HTMLButtonElement>("#run-workflow");
 
 let currentMode: PublishMode = "manual_review";
@@ -32,7 +33,12 @@ async function runDemo(): Promise<void> {
     currentInput = input;
     currentResult = result;
     appRoot.innerHTML = renderWorkbench(input, result);
-    statusRoot.textContent = currentMode === "mock" ? "模拟发布完成" : "等待人工审核";
+    statusRoot.textContent =
+      currentMode === "real"
+        ? "真实发布预检完成"
+        : currentMode === "mock"
+          ? "模拟发布完成"
+          : "等待人工审核";
   } catch (error) {
     statusRoot.textContent = error instanceof Error ? error.message : "运行失败";
   }
@@ -88,6 +94,7 @@ function setMode(mode: PublishMode): void {
   currentMode = mode;
   reviewButton?.classList.toggle("active", mode === "manual_review");
   mockButton?.classList.toggle("active", mode === "mock");
+  realButton?.classList.toggle("active", mode === "real");
 }
 
 reviewButton?.addEventListener("click", () => {
@@ -97,6 +104,11 @@ reviewButton?.addEventListener("click", () => {
 
 mockButton?.addEventListener("click", () => {
   setMode("mock");
+  void runDemo();
+});
+
+realButton?.addEventListener("click", () => {
+  setMode("real");
   void runDemo();
 });
 
