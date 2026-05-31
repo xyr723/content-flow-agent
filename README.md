@@ -2,6 +2,14 @@
 
 面向创作者的多平台内容发布工具。用户输入一份原始内容和图文/视频素材后，系统通过单向 workflow 数据流自动生成公众号、知乎、B 站、小红书、抖音等平台的发布版本，并支持预览、校验、人工审核和模拟发布。
 
+## 演示视频
+
+[![内容流转助手 GUI 演示截图](docs/assets/demo/content-flow-agent-demo.png)](docs/assets/demo/content-flow-agent-demo.webm)
+
+[查看或下载完整演示视频](docs/assets/demo/content-flow-agent-demo.webm)
+
+视频覆盖 GUI 自定义输入、素材路径选择、后端 API 调用、模拟发布、人工审核、审核编辑后发布和真实发布预检。演示使用本地 Node 后端执行完整链路，不依赖 GitHub Pages 静态页面。
+
 ## 选题方向
 
 本项目对应「题目二：多平台内容发布工具」。
@@ -146,6 +154,18 @@ interface PlatformSkill {
 | 小红书 | 图文/短视频 | 种草标题、正文、话题标签、封面文案 | 模拟发布 |
 | 抖音 | 短视频 | 短标题、简介、话题、封面文案 | 模拟发布 |
 
+## 当前完成闭环
+
+| 模块 | 完成状态 | 说明 |
+| --- | --- | --- |
+| Planner 智能化 | 已接入 | 支持规则快速路径与 LangChain 结构化解析，并保留失败回退 |
+| Workflow 节点化 | 已接入 | 内容标准化、平台规划、Skill 适配、独立校验、审核、发布报告可独立验证 |
+| 审核交互 | 已接入 | GUI 支持审核通过、拒绝、编辑首个平台草稿后继续发布 |
+| 独立校验器 | 已接入 | 平台字段、素材要求、草稿警告与发布阻断独立于 Skill 执行 |
+| Publisher 抽象 | 已接入 | MockPublisher 与 RealPublisher 预检隔离，真实发布未配置时安全失败 |
+| GUI 操作闭环 | 已接入 | 表单输入、平台选择、素材路径、三种发布模式和后端 API 调用已打通 |
+| 外部 Skill 扩展 | 已接入 | 通过 ExternalSkillAdapter 接入外部 adapt/validate/publish hook |
+
 ## LangChain 的使用边界
 
 LangChain 只用于 Agent Planner：
@@ -283,7 +303,11 @@ npm run demo
 npm run demo:gui
 ```
 
-打开命令输出的本地地址后，可以看到「内容流转助手工作台」。这个入口会同时启动 Node 后端和 GUI 静态文件服务：
+打开命令输出的本地地址后，可以看到「内容流转助手工作台」。这个入口会同时启动 Node 后端和 GUI 静态文件服务。
+
+注意：`127.0.0.1` 只代表运行命令的当前机器或容器。如果服务在远程环境、WSL 或隔离容器里启动，而浏览器在另一个桌面环境中打开，就会出现连接被拒绝；录屏和验收应在同一环境中运行 `npm run demo:gui`，或直接查看上方提交到仓库的演示视频。
+
+GUI 链路能力：
 
 - GUI 提交自定义标题、正文、目标平台、发布模式、图片路径和视频路径。
 - 后端提供 `GET /api/health`、`POST /api/workflow/run` 和 `POST /api/workflow/review`。
