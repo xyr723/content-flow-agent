@@ -64,6 +64,30 @@ describe("renderWorkbench", () => {
     assert.match(html, /等待人工审核/);
   });
 
+  it("renders review action controls when drafts are waiting for review", () => {
+    const html = renderWorkbench(input, result);
+
+    assert.match(html, /通过审核并模拟发布/);
+    assert.match(html, /拒绝发布/);
+    assert.match(html, /编辑首个平台标题后发布/);
+    assert.match(html, /data-review-action="approve"/);
+    assert.match(html, /data-review-action="reject"/);
+    assert.match(html, /data-review-action="edit_first"/);
+  });
+
+  it("renders rejected review results", () => {
+    const html = renderWorkbench(input, {
+      ...result,
+      publishResults: [
+        { platform: "wechat", status: "mock_published", message: "模拟发布成功" },
+        { platform: "zhihu", status: "rejected", message: "人工审核拒绝发布" },
+      ],
+    });
+
+    assert.match(html, /审核拒绝/);
+    assert.match(html, /人工审核拒绝发布/);
+  });
+
   it("escapes source content before rendering", () => {
     const html = renderWorkbench({ ...input, sourceText: "<script>bad</script>" }, result);
 

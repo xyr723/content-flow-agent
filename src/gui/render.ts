@@ -26,6 +26,7 @@ function escapeHtml(value: string): string {
 function statusText(result: PublishResult): string {
   if (result.status === "review_required") return "等待人工审核";
   if (result.status === "mock_published") return "模拟发布成功";
+  if (result.status === "rejected") return "审核拒绝";
   if (result.status === "failed") return "发布失败";
   return "已生成草稿";
 }
@@ -51,7 +52,8 @@ function renderDraft(draft: PlatformDraft, validation?: ValidationResult): strin
 
 function renderReport(result: PublishResult, validation?: ValidationResult): string {
   const issues = [...(validation?.errors ?? []), ...(validation?.warnings ?? [])];
-  const visibleMessage = issues[0] ?? statusText(result);
+  const visibleMessage =
+    result.status === "rejected" ? result.message : issues[0] ?? statusText(result);
 
   return `
     <article class="report-card">
@@ -59,6 +61,21 @@ function renderReport(result: PublishResult, validation?: ValidationResult): str
       <span>${statusText(result)}</span>
       <p>${escapeHtml(visibleMessage)}</p>
     </article>
+  `;
+}
+
+function renderReviewActions(result: WorkflowResult): string {
+  const needsReview = result.publishResults.some(
+    (publishResult) => publishResult.status === "review_required",
+  );
+  if (!needsReview) return "";
+
+  return `
+    <div class="review-actions" aria-label="人工审核动作">
+      <button type="button" data-review-action="approve">通过审核并模拟发布</button>
+      <button type="button" data-review-action="reject">拒绝发布</button>
+      <button type="button" data-review-action="edit_first">编辑首个平台标题后发布</button>
+    </div>
   `;
 }
 
@@ -92,6 +109,7 @@ export function renderWorkbench(input: ContentPackage, result: WorkflowResult): 
         <span>提醒 ${warningCount}</span>
         <span>失败 ${failedCount}</span>
       </div>
+      ${renderReviewActions(result)}
       <div class="report-list">
         ${result.publishResults
           .map((publishResult, index) => renderReport(publishResult, result.validations[index]))

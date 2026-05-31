@@ -43,8 +43,7 @@ export type ValidationResult = {
 
 export type PublishResult = {
   platform: PlatformId;
-  status: "drafted" | "review_required" | "mock_published" | "failed";
+  status: "drafted" | "review_required" | "mock_published" | "failed" | "rejected";
   url?: string;
   message: string;
 };
-

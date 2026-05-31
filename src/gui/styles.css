@@ -82,6 +82,7 @@ h1 {
 }
 
 .actions,
+.review-actions,
 .flow-rail,
 .stats,
 .platform-row,
@@ -219,6 +220,22 @@ h2 {
 
 .stats {
   margin-bottom: 12px;
+}
+
+.review-actions {
+  margin-bottom: 12px;
+}
+
+.review-actions button:first-child {
+  border-color: var(--green);
+}
+
+.review-actions button:nth-child(2) {
+  border-color: rgba(201, 63, 77, 0.55);
+}
+
+.review-actions button:nth-child(3) {
+  border-color: rgba(47, 102, 144, 0.55);
 }
 
 .stats span:nth-child(2) {
