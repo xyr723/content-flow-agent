@@ -1,5 +1,6 @@
 import { SkillGateway } from "../core/skill-gateway.js";
 import type { PlatformSkill } from "../core/platform-skill.js";
+import { MockPublisher } from "../publishing/publisher.js";
 import type {
   ContentPackage,
   MediaAsset,
@@ -55,11 +56,13 @@ class ProfiledPlatformSkill implements PlatformSkill {
   readonly id: PlatformId;
   readonly displayName: string;
   readonly supportedMedia: PlatformSkill["supportedMedia"];
+  private readonly publisher: MockPublisher;
 
   constructor(private readonly profile: PlatformProfile) {
     this.id = profile.id;
     this.displayName = profile.displayName;
     this.supportedMedia = profile.supportedMedia;
+    this.publisher = new MockPublisher(profile.id, profile.displayName);
   }
 
   async adapt(input: ContentPackage): Promise<PlatformDraft> {
@@ -85,12 +88,7 @@ class ProfiledPlatformSkill implements PlatformSkill {
   }
 
   async publish(draft: PlatformDraft): Promise<PublishResult> {
-    return {
-      platform: draft.platform,
-      status: "mock_published",
-      url: `https://example.com/mock/${draft.platform}`,
-      message: `${this.displayName} 模拟发布成功`,
-    };
+    return this.publisher.publish(draft);
   }
 }
 

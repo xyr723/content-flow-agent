@@ -31,6 +31,12 @@ function statusText(result: PublishResult): string {
   return "已生成草稿";
 }
 
+function modeText(input: ContentPackage): string {
+  if (input.publishMode === "real") return "真实发布预检";
+  if (input.publishMode === "mock") return "模拟发布";
+  return "人工审核";
+}
+
 function renderDraft(draft: PlatformDraft, validation?: ValidationResult): string {
   const badge = validation?.ok === false ? "需修改" : validation?.warnings.length ? "提醒" : "通过";
   const tags = draft.tags
@@ -53,7 +59,9 @@ function renderDraft(draft: PlatformDraft, validation?: ValidationResult): strin
 function renderReport(result: PublishResult, validation?: ValidationResult): string {
   const issues = [...(validation?.errors ?? []), ...(validation?.warnings ?? [])];
   const visibleMessage =
-    result.status === "rejected" ? result.message : issues[0] ?? statusText(result);
+    result.status === "rejected" || (result.status === "failed" && validation?.ok !== false)
+      ? result.message
+      : issues[0] ?? statusText(result);
 
   return `
     <article class="report-card">
@@ -61,6 +69,18 @@ function renderReport(result: PublishResult, validation?: ValidationResult): str
       <span>${statusText(result)}</span>
       <p>${escapeHtml(visibleMessage)}</p>
     </article>
+  `;
+}
+
+function renderExtensionStatus(input: ContentPackage): string {
+  const realStatus = input.publishMode === "real" ? "未配置" : "预检待运行";
+
+  return `
+    <div class="extension-status" aria-label="扩展层状态">
+      <strong>扩展层状态</strong>
+      <span>外部 Skill 适配层：可用</span>
+      <span>真实发布：${realStatus}</span>
+    </div>
   `;
 }
 
@@ -84,14 +104,18 @@ export function renderWorkbench(input: ContentPackage, result: WorkflowResult): 
     (count, validation) => count + validation.errors.length + validation.warnings.length,
     0,
   );
-  const failedCount = result.validations.filter((validation) => !validation.ok).length;
+  const failedCount = Math.max(
+    result.validations.filter((validation) => !validation.ok).length,
+    result.publishResults.filter((publishResult) => publishResult.status === "failed").length,
+  );
 
   return `
     <section class="content-panel">
       <h2>内容包</h2>
       <div class="field"><strong>${escapeHtml(input.title ?? "未命名内容")}</strong></div>
       <p class="source-text">${escapeHtml(input.sourceText)}</p>
-      <div class="mode">当前模式：${input.publishMode === "mock" ? "模拟发布" : "人工审核"}</div>
+      <div class="mode">当前模式：${modeText(input)}</div>
+      ${renderExtensionStatus(input)}
     </section>
     <section class="draft-panel">
       <h2>平台草稿</h2>

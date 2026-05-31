@@ -50,7 +50,7 @@ Skill Gateway 是统一入口，负责：
 
 - 注册平台 Skill。
 - 根据平台 ID 找到 Skill。
-- 执行 `adapt` 和 `publish`。
+- 执行 `adapt`。
 
 这样平台扩展不会污染 workflow 主逻辑。
 
@@ -63,6 +63,16 @@ Draft Validator 是独立校验器，负责：
 - 合并平台适配阶段生成的非阻塞提醒。
 
 workflow 的 `validate_platform_drafts` 节点统一调用独立校验器。平台 Skill 的 `validate` 仅作为兼容入口保留，并委托给同一套校验器规则。
+
+## Publisher Registry
+
+Publisher Registry 是发布入口，负责：
+
+- 注册平台 Publisher。
+- 根据平台 ID 找到 Publisher。
+- 执行模拟发布或真实发布预检并返回 `PublishResult`。
+
+workflow 的发布节点统一调用 Publisher Registry。`mock` 模式走 `MockPublisher`，`real` 模式走 `RealPublisher`。未显式配置真实发布执行器时，`RealPublisher` 只返回安全失败结果，不读取凭据、不访问真实平台。平台 Skill 的 `publish` 仅作为兼容入口保留，并委托给同一套 mock publisher。
 
 ## 外部 Skill 兼容思路
 
@@ -78,6 +88,8 @@ External Skill
 ```
 
 这样可以保留自研协议和测试边界，同时允许接入外部 Skill。
+
+`ExternalSkillAdapter` 已提供最小闭环：外部 Skill 可以通过 adapter 注册进 `SkillGateway`；缺省校验和发布会回落到内部 `DraftValidator` 和 `MockPublisher`。
 
 ## 安全边界
 

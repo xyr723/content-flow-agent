@@ -9,6 +9,12 @@ const projectRoot = resolve(testDir, "../..");
 const { SkillGateway } = await import(
   pathToFileURL(resolve(projectRoot, ".test-build/src/core/skill-gateway.js"))
 );
+const { MockPublisher, PublisherRegistry } = await import(
+  pathToFileURL(resolve(projectRoot, ".test-build/src/publishing/publisher.js"))
+);
+const { RealPublisher } = await import(
+  pathToFileURL(resolve(projectRoot, ".test-build/src/publishing/real-publisher.js"))
+);
 const {
   adaptByPlatformSkillsNode,
   humanReviewHookNode,
@@ -66,11 +72,50 @@ function createSkill(platform, calls, valid = true) {
 }
 
 function createGateway() {
-  const calls = { adapt: [], validate: [], publish: [] };
+  const calls = { adapt: [], validate: [], publish: [], publisher: [] };
   const gateway = new SkillGateway();
   gateway.register(createSkill("wechat", calls, true));
   gateway.register(createSkill("zhihu", calls, false));
   return { gateway, calls };
+}
+
+function createPublisherRegistry(calls) {
+  const registry = new PublisherRegistry();
+  for (const platform of ["wechat", "zhihu"]) {
+    registry.register({
+      ...new MockPublisher(platform, platform),
+      async publish(draft) {
+        calls.publisher.push(draft.platform);
+        return {
+          platform: draft.platform,
+          status: "mock_published",
+          url: `https://example.com/mock/${draft.platform}`,
+          message: `${draft.platform} publisher 发布成功`,
+        };
+      },
+    });
+  }
+  return registry;
+}
+
+function createRealPublisherRegistry(calls) {
+  const registry = new PublisherRegistry();
+  for (const platform of ["wechat", "zhihu"]) {
+    registry.register(
+      new RealPublisher(platform, platform, {
+        async publish(draft) {
+          calls.realPublisher.push(draft.platform);
+          return {
+            platform: draft.platform,
+            status: "mock_published",
+            url: `https://real.example/${draft.platform}`,
+            message: `${draft.platform} 真实发布扩展已调用`,
+          };
+        },
+      }),
+    );
+  }
+  return registry;
 }
 
 describe("content publish workflow nodes", () => {
@@ -99,7 +144,8 @@ describe("content publish workflow nodes", () => {
     const drafts = await adaptByPlatformSkillsNode(planned, gateway);
     const validations = await validatePlatformDraftsNode(drafts);
     const reviewResults = humanReviewHookNode(drafts);
-    const publishResults = await publishOrMockPublishNode(planned, drafts, validations, gateway);
+    const publishers = createPublisherRegistry(calls);
+    const publishResults = await publishOrMockPublishNode(planned, drafts, validations, publishers);
 
     assert.deepEqual(drafts.map((draft) => draft.platform), ["wechat", "zhihu"]);
     assert.deepEqual(validations.map((validation) => validation.ok), [true, false]);
@@ -112,8 +158,45 @@ describe("content publish workflow nodes", () => {
       ["mock_published", "failed"],
     );
     assert.deepEqual(calls.validate, []);
-    assert.deepEqual(calls.publish, ["wechat"]);
+    assert.deepEqual(calls.publish, []);
+    assert.deepEqual(calls.publisher, ["wechat"]);
     assert.match(publishResults[1].message, /正文不能为空/);
+  });
+
+  it("runs workflow publishing through publisher registry instead of platform skills", async () => {
+    const { gateway, calls } = createGateway();
+    const publishers = createPublisherRegistry(calls);
+
+    const result = await runContentPublishWorkflow(createInput("mock"), gateway, publishers);
+
+    assert.deepEqual(
+      result.publishResults.map((publishResult) => publishResult.status),
+      ["mock_published", "failed"],
+    );
+    assert.deepEqual(calls.publish, []);
+    assert.deepEqual(calls.publisher, ["wechat"]);
+  });
+
+  it("routes real mode through real publisher registry", async () => {
+    const { gateway, calls } = createGateway();
+    calls.realPublisher = [];
+    const mockPublishers = createPublisherRegistry(calls);
+    const realPublishers = createRealPublisherRegistry(calls);
+
+    const result = await runContentPublishWorkflow(
+      createInput("real"),
+      gateway,
+      mockPublishers,
+      realPublishers,
+    );
+
+    assert.deepEqual(
+      result.publishResults.map((publishResult) => publishResult.url),
+      ["https://real.example/wechat", undefined],
+    );
+    assert.deepEqual(calls.publish, []);
+    assert.deepEqual(calls.publisher, []);
+    assert.deepEqual(calls.realPublisher, ["wechat"]);
   });
 
   it("validates drafts with the independent validator instead of platform skills", async () => {
