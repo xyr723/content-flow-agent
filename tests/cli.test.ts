@@ -37,6 +37,43 @@ describe("cli", () => {
     );
   });
 
+  it("runs the workflow with the hybrid planner fast path", () => {
+    const result = runCli([
+      "--text",
+      "这是一份用于多平台分发的正文。",
+      "--instruction",
+      "发到公众号和知乎，先审核",
+      "--planner",
+      "hybrid",
+    ]);
+
+    assert.equal(result.status, 0, result.stderr);
+
+    const report = JSON.parse(result.stdout);
+    assert.deepEqual(
+      report.drafts.map((draft: { platform: string }) => draft.platform),
+      ["wechat", "zhihu"],
+    );
+    assert.deepEqual(
+      report.publishResults.map((publishResult: { status: string }) => publishResult.status),
+      ["review_required", "review_required"],
+    );
+  });
+
+  it("rejects unsupported planner modes", () => {
+    const result = runCli([
+      "--text",
+      "正文",
+      "--instruction",
+      "发到公众号",
+      "--planner",
+      "unknown",
+    ]);
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /--planner only supports rules, hybrid, or langchain/);
+  });
+
   it("prints usage and exits with failure when required arguments are missing", () => {
     const result = runCli(["--instruction", "发到公众号"]);
 
